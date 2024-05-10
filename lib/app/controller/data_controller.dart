@@ -55,9 +55,25 @@ class DataController extends GetxController {
     });
   }
 
+  Stream<List<ExpenseModel>> getAllExpenses() {
+    return FirebaseFirestore.instance
+        .collection('expenses')
+        .snapshots()
+        .map((snapshot) {
+      List<ExpenseModel> expenses = snapshot.docs
+          .map((doc) => ExpenseModel.fromJson(doc.data()))
+          .toList();
+
+      // Sort the expenses locally by date in descending order
+      expenses.sort((a, b) => b.date.compareTo(a.date));
+
+      return expenses;
+    });
+  }
+
   Future addExpense({
     required double amount,
-    required String description,
+    // required String description,
     required String userId,
     required BuildContext context,
   }) async {
@@ -70,7 +86,7 @@ class DataController extends GetxController {
             id: '',
             userId: userId,
             amount: amount,
-            description: description,
+            // description: description,
             date: DateTime.now(),
           ).toJson());
 
@@ -98,6 +114,64 @@ class DataController extends GetxController {
     }
   }
 
+  Future updateExpense({
+    required String expenseId,
+    required double amount,
+    // required String description,
+    required String userId,
+    required BuildContext context,
+  }) async {
+    processIndicator.show(context);
+    try {
+      // Update expense in 'expenses' collection
+      await FirebaseFirestore.instance
+          .collection('expenses')
+          .doc(expenseId)
+          .update({
+        'userId': userId,
+        'amount': amount,
+        // 'description': description,
+        // 'date': DateTime.now(),
+      });
+
+      processIndicator.hide(context);
+      CommonMethod.getXSnackBar(
+        "Success",
+        "Expense updated successfully",
+        success,
+      );
+      print('Expense updated successfully');
+    } catch (e) {
+      processIndicator.hide(context);
+      CommonMethod.getXSnackBar("Failed", "Error updating expense: $e", red);
+    }
+  }
+
+  Future deleteExpense({
+    required String expenseId,
+    required BuildContext context,
+  }) async {
+    processIndicator.show(context);
+    try {
+      // Delete expense from 'expenses' collection
+      await FirebaseFirestore.instance
+          .collection('expenses')
+          .doc(expenseId)
+          .delete();
+
+      processIndicator.hide(context);
+      CommonMethod.getXSnackBar(
+        "Success",
+        "Expense deleted successfully",
+        success,
+      );
+      print('Expense deleted successfully');
+    } catch (e) {
+      processIndicator.hide(context);
+      CommonMethod.getXSnackBar("Failed", "Error deleting expense: $e", red);
+    }
+  }
+
   Stream<double> getTotalExpenseStream(String userId) async* {
     yield await getTotalExpense(userId);
   }
@@ -121,6 +195,93 @@ class DataController extends GetxController {
       // Handle errors
       print('Error calculating total expense: $e');
       return 0.0; // Return 0 if an error occurs
+    }
+  }
+
+  Stream<double> getAllTotalExpenseStream() async* {
+    yield await getAllTotalExpense();
+  }
+
+  Future<double> getAllTotalExpense() async {
+    try {
+      // Query expenses for the specified user
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('expenses').get();
+
+      // Calculate the total expense amount
+      double totalExpense = querySnapshot.docs.fold(0, (total, doc) {
+        Map<String, dynamic> data = (doc.data() as Map<String, dynamic>);
+        return total + (data['amount'] ?? 0.0);
+      });
+
+      return totalExpense;
+    } catch (e) {
+      // Handle errors
+      print('Error calculating total expense: $e');
+      return 0.0; // Return 0 if an error occurs
+    }
+  }
+
+  Future<void> deleteUserAndExpenses(String userId) async {
+    try {
+      // Delete all expenses associated with the user
+      await deleteAllExpenses(userId);
+
+      // Delete the user document
+      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+
+      print('User $userId and their associated expenses have been deleted.');
+    } catch (e) {
+      // Handle errors
+      print('Error deleting user and expenses: $e');
+    }
+  }
+
+  Future<void> deleteAllExpenses(String userId) async {
+    try {
+      // Get a reference to the 'expenses' collection
+      CollectionReference expensesRef =
+          FirebaseFirestore.instance.collection('expenses');
+
+      // Create a new write batch
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+
+      // Query expenses for the specified user
+      QuerySnapshot querySnapshot =
+          await expensesRef.where('userId', isEqualTo: userId).get();
+
+      // Iterate through each document in the query result and add delete operations to the batch
+      querySnapshot.docs.forEach((doc) {
+        batch.delete(doc.reference);
+      });
+
+      // Commit the batch
+      await batch.commit();
+
+      print('All expenses for user $userId have been deleted.');
+    } catch (e) {
+      // Handle errors
+      print('Error deleting expenses: $e');
+    }
+  }
+
+  Future<UserModel?> getUserModel(String userId) async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      if (snapshot.exists) {
+        Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
+        UserModel model = UserModel.fromJson(userData);
+        return model;
+      } else {
+        print('User document with ID $userId does not exist');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user document: $e');
+      return null;
     }
   }
 }

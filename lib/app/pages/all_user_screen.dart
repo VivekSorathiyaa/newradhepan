@@ -1,7 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:radhe/app/components/buttons/text_button.dart';
+import 'package:radhe/app/components/custom_dialog.dart';
+import 'package:radhe/app/controller/auth_controller.dart';
 import 'package:radhe/app/controller/data_controller.dart';
 import 'package:radhe/app/pages/authentication/create_account_screen.dart';
+import 'package:radhe/app/utils/static_decoration.dart';
 import 'package:radhe/app/widget/shodow_container_widget.dart';
 
 import '../../models/user_model.dart';
@@ -18,6 +24,7 @@ class AllUserScreen extends StatefulWidget {
 
 class _AllUserScreenState extends State<AllUserScreen> {
   final DataController controller = Get.put(DataController());
+  final AuthController authController = Get.put(AuthController());
   @override
   void initState() {
     controller.fetchUsers();
@@ -34,7 +41,7 @@ class _AllUserScreenState extends State<AllUserScreen> {
           color: backgroundColor,
         ),
         onPressed: () {
-          Get.to(() => CreateAccountScreen());
+          Get.to(() => CreateAccountScreen(userModel: null));
         },
       ),
       body: Obx(() {
@@ -49,7 +56,10 @@ class _AllUserScreenState extends State<AllUserScreen> {
               UserModel user = controller.userList[index];
               return InkWell(
                 onTap: () {
-                  Get.to(() => UserExpensesScreen(user: user));
+                  Get.to(() => UserExpensesScreen(
+                        user: user,
+                        isAdmin: true,
+                      ));
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(top: 10, right: 10, left: 10),
@@ -65,28 +75,75 @@ class _AllUserScreenState extends State<AllUserScreen> {
                                 style: AppTextStyle.normalBold16
                                     .copyWith(color: primaryWhite),
                               )),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user.name,
-                                  style: AppTextStyle.normalBold18,
-                                ),
-                                Text(
-                                  "Phone - ${user.phone}",
-                                  style: AppTextStyle.normalRegular14
-                                      .copyWith(fontFamily: ''),
-                                ),
-                                Text(
-                                  "Password - ${user.password}",
-                                  style: AppTextStyle.normalRegular14
-                                      .copyWith(fontFamily: ''),
-                                ),
-                              ],
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user.name,
+                                    style: AppTextStyle.normalBold18,
+                                  ),
+                                  Text(
+                                    "Phone - ${user.phone}",
+                                    style: AppTextStyle.normalRegular14
+                                        .copyWith(fontFamily: ''),
+                                  ),
+                                  Text(
+                                    "Password - ${user.password}",
+                                    style: AppTextStyle.normalRegular14
+                                        .copyWith(fontFamily: ''),
+                                  ),
+                                ],
+                              ),
                             ),
-                          )
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.more_vert),
+                            onPressed: () {
+                              CommonDialog.showSimpleDialog(
+                                  title: "Options",
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      children: [
+                                        PrimaryTextButton(
+                                            title: "Edit",
+                                            onPressed: () {
+                                              Get.to(() => CreateAccountScreen(
+                                                  userModel: user));
+                                            }),
+                                        height20,
+                                        PrimaryTextButton(
+                                            buttonColor: red,
+                                            title: "Delete",
+                                            onPressed: () {
+                                              CommonDialog
+                                                  .showConfirmationDialog(
+                                                      title:
+                                                          "Are you sure you want to delete this user? This action will permanently remove the user's account and all associated expenses.",
+                                                      onOkPress: () {
+                                                        Get.back();
+                                                        Get.back();
+                                                        authController
+                                                            .deleteAuthUser(
+                                                                context:
+                                                                    context,
+                                                                userId: user.id,
+                                                                phone:
+                                                                    user.phone,
+                                                                password: user
+                                                                    .password);
+                                                      },
+                                                      context: context);
+                                            }),
+                                      ],
+                                    ),
+                                  ),
+                                  context: context);
+                            },
+                          ),
                         ],
                       )),
                 ),

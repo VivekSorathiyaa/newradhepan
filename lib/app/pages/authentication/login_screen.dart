@@ -142,7 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         // Navigate to the next screen if the password is correct
 
                                         Get.back();
-                                        Get.to(() => CreateAccountScreen());
+                                        Get.to(() => CreateAccountScreen(
+                                              userModel: null,
+                                            ));
                                       } else {
                                         CommonMethod.getXSnackBar(
                                             "Error",

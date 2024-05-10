@@ -4,14 +4,14 @@ class ExpenseModel {
   String id;
   String userId;
   double amount;
-  String description;
+  // String description;
   DateTime date;
 
   ExpenseModel({
     required this.id,
     required this.userId,
     required this.amount,
-    required this.description,
+    // required this.description,
     required this.date,
   });
 
@@ -20,7 +20,7 @@ class ExpenseModel {
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
       amount: json['amount'] ?? 0.0,
-      description: json['description'] ?? '',
+      // description: json['description'] ?? '',
       date:
           json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
     );
@@ -31,7 +31,7 @@ class ExpenseModel {
       'id': id,
       'userId': userId,
       'amount': amount,
-      'description': description,
+      // 'description': description,
       'date': date.toIso8601String(),
     };
   }

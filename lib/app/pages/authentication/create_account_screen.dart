@@ -10,12 +10,14 @@ import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/app/utils/static_decoration.dart';
 import 'package:radhe/app/utils/validator.dart';
 import 'package:radhe/app/widget/auth_title_widget.dart';
+import 'package:radhe/models/user_model.dart';
 import '../../components/common_methos.dart';
 import '../../utils/ui.dart';
 import 'login_screen.dart';
 
 class CreateAccountScreen extends StatefulWidget {
-  const CreateAccountScreen({Key? key}) : super(key: key);
+  UserModel? userModel;
+  CreateAccountScreen({Key? key, required this.userModel}) : super(key: key);
   @override
   State<CreateAccountScreen> createState() => _CreateAccountScreenState();
 }
@@ -23,8 +25,18 @@ class CreateAccountScreen extends StatefulWidget {
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final authController = Get.put(AuthController());
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
+    if (widget.userModel != null) {
+      authController.nameController.text = widget.userModel!.name;
+      authController.phoneController.text = widget.userModel!.phone;
+      authController.passwordController.text = widget.userModel!.password;
+      authController.businessController.text = widget.userModel!.businessName;
+      authController.confirmPasswordController.text =
+          widget.userModel!.password;
+      setState(() {});
+    }
     super.initState();
   }
 
@@ -49,8 +61,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
               child: Column(
                 children: [
                   height15,
-                  const AuthTitleWidget(
-                    title: "Create User Account",
+                  AuthTitleWidget(
+                    title: widget.userModel != null
+                        ? "Edit User"
+                        : "Create User Account",
                   ),
                   customHeight(40),
                   height16,
@@ -68,7 +82,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   ),
                   height16,
                   TextFormFieldWidget(
+                    controller: authController.businessController,
+                    prefixIcon: Icon(
+                      Icons.business,
+                      color: hintGrey,
+                    ),
+                    hintText: "Business name",
+                    keyboardType: TextInputType.name,
+                  ),
+                  height16,
+                  TextFormFieldWidget(
                     controller: authController.phoneController,
+                    enabled: widget.userModel == null,
                     prefixIcon: Icon(
                       Icons.phone_rounded,
                       color: hintGrey,
@@ -98,7 +123,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     onPressed: () {
                       // if(authController.emailController.text)
                       if (_formKey.currentState!.validate()) {
-                        authController.regiterUser(context);
+                        if (widget.userModel != null) {
+                          authController.editUser(
+                              userId: widget.userModel!.id,
+                              context: context,
+                              password: widget.userModel!.password,
+                              phone: widget.userModel!.phone);
+                        } else {
+                          authController.regiterUser(context);
+                        }
                         // authController.registerWithEmailAndPassword(context);
                       }
                       // authController.registerUserWithEmailPassword(
