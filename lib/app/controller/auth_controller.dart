@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,13 +23,15 @@ class AuthController extends GetxController {
   final confirmPasswordController = TextEditingController();
   final phoneController = TextEditingController();
   static Circle processIndicator = Circle();
-  UserModel currentUserModel = UserModel(
-      id: "",
-      name: "",
-      phone: "",
-      createdBy: "",
-      password: "",
-      businessName: '');
+  Rx<UserModel> currentUser = UserModel(
+          id: "",
+          name: "",
+          phone: "",
+          createdBy: "",
+          password: "",
+          businessName: '',
+          imageUrl: '')
+      .obs;
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var dataController = Get.put(DataController());
@@ -38,7 +43,8 @@ class AuthController extends GetxController {
           .get();
       if (snapshot.exists) {
         Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
-        currentUserModel = UserModel.fromJson(userData);
+        currentUser.value = UserModel.fromJson(userData);
+        update();
       } else {
         print('User document with ID $userId does not exist');
         return null;
@@ -49,7 +55,21 @@ class AuthController extends GetxController {
     }
   }
 
-  Future regiterUser(BuildContext context) async {
+  Future<String> uploadUserImage(File imageFile) async {
+    String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+    Reference ref =
+        FirebaseStorage.instance.ref().child('user_images').child(fileName);
+
+    UploadTask uploadTask = ref.putFile(imageFile);
+
+    TaskSnapshot storageTaskSnapshot = await uploadTask;
+    String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
+
+    return downloadUrl;
+  }
+
+  Future regiterUser(
+      {required BuildContext context, required File imageFile}) async {
     processIndicator.show(context);
     try {
       if (passwordController.text != confirmPasswordController.text) {
@@ -61,13 +81,17 @@ class AuthController extends GetxController {
         email: phoneController.text.trim() + '@example.com',
         password: passwordController.text.trim(),
       );
+
+      String imageUrl = await uploadUserImage(imageFile);
+
       UserModel userModel = UserModel(
           id: userCredential.user!.uid,
           name: nameController.text.trim(),
           phone: phoneController.text.trim(),
           createdBy: adminId,
           password: passwordController.text.trim(),
-          businessName: businessController.text.trim());
+          businessName: businessController.text.trim(),
+          imageUrl: imageUrl);
       await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
@@ -137,12 +161,13 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> editUser({
-    required String userId,
-    required BuildContext context,
-    required String password,
-    required String phone,
-  }) async {
+  Future<void> editUser(
+      {required String userId,
+      required BuildContext context,
+      required String password,
+      required String phone,
+      required File? userImage,
+      required String? networkUrl}) async {
     processIndicator.show(context);
 
     try {
@@ -155,11 +180,17 @@ class AuthController extends GetxController {
       if (user != null) {
         await user.updatePassword(passwordController.text);
       }
+
+      String imageUrl = userImage != null
+          ? await uploadUserImage(userImage)
+          : networkUrl.toString();
+
       await _firestore.collection('users').doc(userId).update({
         'name': nameController.text,
         'phone': phoneController.text,
         'password': passwordController.text,
         'businessName': businessController.text,
+        'networkUrl': imageUrl,
       });
 
       processIndicator.hide(context);
@@ -209,6 +240,16 @@ class AuthController extends GetxController {
           "Error deleting user from Firebase Authentication: $e", red);
       print('Error deleting user from Firebase Authentication: $e');
       // Handle errors
+    }
+  }
+
+  void signOut() async {
+    try {
+      await auth.signOut();
+      Get.offAll(LoginScreen()); // Navigate to login screen after sign-out
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to sign out: $e',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 

@@ -59,7 +59,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           //       color: primaryWhite), // Set the drawer icon color here
 
           //   backgroundColor: appColor,
-          //   title: Text('Radhe Pan - ${authController.currentUserModel.name}',
+          //   title: Text('shop book - ${authController.currentUserModel.name}',
           //       style: AppTextStyle.homeAppbarTextStyle
           //           .copyWith(color: primaryWhite)),
           //   actions: [
@@ -78,7 +78,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           //         ))
           //   ],
           // ),
-          bottomNavigationBar: authController.currentUserModel.phone == adminId
+          bottomNavigationBar: authController.currentUser.value.phone == adminId
               ? Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.only(
@@ -132,12 +132,15 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   ),
                 )
               : null,
-          body: authController.currentUserModel.phone == adminId
+          body:
+          Obx(() => 
+          
+           authController.currentUser.value.phone == adminId
               ? _widgetOptions.elementAt(_selectedIndex)
               : UserExpensesScreen(
-                  user: authController.currentUserModel,
+                  user: authController.currentUser.value,
                   isAdmin: false,
-                )),
+                ),),),
     );
   }
 

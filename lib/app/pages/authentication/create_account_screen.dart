@@ -1,8 +1,13 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:radhe/app/components/buttons/text_button.dart';
+import 'package:radhe/app/components/custom_dialog.dart';
 import 'package:radhe/app/components/input_text_field_widget.dart';
 import 'package:radhe/app/controller/auth_controller.dart';
 import 'package:radhe/app/utils/app_asset.dart';
@@ -10,9 +15,12 @@ import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/app/utils/static_decoration.dart';
 import 'package:radhe/app/utils/validator.dart';
 import 'package:radhe/app/widget/auth_title_widget.dart';
+import 'package:radhe/app/widget/shodow_container_widget.dart';
 import 'package:radhe/models/user_model.dart';
 import '../../components/common_methos.dart';
+import '../../components/image/image_widget.dart';
 import '../../utils/ui.dart';
+import '../../widget/common_image_picker.dart';
 import 'login_screen.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -25,6 +33,7 @@ class CreateAccountScreen extends StatefulWidget {
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final authController = Get.put(AuthController());
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  File? _imageFile;
 
   @override
   void initState() {
@@ -67,6 +76,54 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         : "Create User Account",
                   ),
                   customHeight(40),
+                  height16,
+
+                  GestureDetector(
+                    onTap: () {
+                      CommonImagePicker().openCustomFilePickerSheet(
+                        context: context,
+                        onTap: (selectedFile) async {
+                          Get.back();
+                          log("message--selectedFile---->${selectedFile.toString()}");
+                          _imageFile = await selectedFile;
+                          setState(() {});
+                        },
+                      );
+                    },
+                    child: ShadowContainerWidget(
+                      color: appColor.withOpacity(.1),
+                      blurRadius: 0,
+                      radius: 100,
+                      padding: 0,
+                      widget: ClipRRect(
+                        borderRadius: BorderRadius.circular(100),
+                        child: SizedBox(
+                          height: 100,
+                          width: 100,
+                          child: widget.userModel != null &&
+                                  widget.userModel!.imageUrl != null &&
+                                  _imageFile == null
+                              ? NetworkImageWidget(
+                                  imageUrl: widget.userModel!.imageUrl,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  borderRadius: BorderRadius.circular(100),
+                                )
+                              : _imageFile != null
+                                  ? Image.file(
+                                      _imageFile!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Icon(
+                                      CupertinoIcons.person,
+                                      color: appColor,
+                                      size: 50,
+                                    ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   height16,
                   TextFormFieldWidget(
                     controller: authController.nameController,
@@ -123,15 +180,26 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     onPressed: () {
                       // if(authController.emailController.text)
                       if (_formKey.currentState!.validate()) {
-                        if (widget.userModel != null) {
-                          authController.editUser(
-                              userId: widget.userModel!.id,
-                              context: context,
-                              password: widget.userModel!.password,
-                              phone: widget.userModel!.phone);
+                        if (_imageFile == null && widget.userModel == null) {
+                          CommonMethod.getXSnackBar(
+                              "Error", "Please select user image", red);
                         } else {
-                          authController.regiterUser(context);
+                          if (widget.userModel != null) {
+                            authController.editUser(
+                                userId: widget.userModel!.id,
+                                context: context,
+                                password: widget.userModel!.password,
+                                phone: widget.userModel!.phone,
+                                userImage: _imageFile,
+                                networkUrl: widget.userModel!.imageUrl);
+                          } else {
+                            authController.regiterUser(
+                              context: context,
+                              imageFile: _imageFile!,
+                            );
+                          }
                         }
+
                         // authController.registerWithEmailAndPassword(context);
                       }
                       // authController.registerUserWithEmailPassword(

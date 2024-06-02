@@ -96,7 +96,7 @@ class AppTextStyle {
   );
 
   static final homeAppbarTextStyle =
-      TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: titleBlack);
+      TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: primaryWhite);
 
   static final normalRegular16 = TextStyle(
     fontSize: 16,
@@ -185,6 +185,11 @@ class AppTextStyle {
   );
   static final normalBold14 = TextStyle(
     fontSize: 14,
+    fontWeight: FontWeight.w700,
+    color: titleBlack,
+  );
+  static final normalBold12 = TextStyle(
+    fontSize: 12,
     fontWeight: FontWeight.w700,
     color: titleBlack,
   );

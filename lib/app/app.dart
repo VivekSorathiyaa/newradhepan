@@ -2,22 +2,21 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:radhe/app/pages/splash_screen.dart';
-import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/app/utils/global_singlton.dart';
-import '../main.dart';
-import '../utils/app_constants.dart';
-import '../utils/repository/network_repository.dart';
-import 'components/common_methos.dart';
+import 'pages/authentication/login_screen.dart';
+import 'pages/main_home_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final dataStorage = GetStorage();
+  User? currentUser = FirebaseAuth.instance.currentUser;
+
 
 final StreamController<String?> selectNotificationStream =
     StreamController<String?>.broadcast();
@@ -275,7 +274,9 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
       theme: ThemeData(
         // backgroundColor: primaryWhite,
         // scaffoldBackgroundColor: primaryWhite,
-        fontFamily: 'Catamaran',
+        // fontFamily: 'Catamaran',
+                textTheme: GoogleFonts.robotoTextTheme(),
+
         // hintColor: regularGrey,
         // iconTheme: const IconThemeData(
         //   color: regularGrey,
@@ -290,7 +291,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
         //   centerTitle: true,
         // ),
       ),
-      home: const SplashScreen(),
+      home: currentUser != null ? MainHomeScreen() : LoginScreen(),
     );
   }
 }

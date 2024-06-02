@@ -1,20 +1,14 @@
-import 'dart:io';
 
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/components/custom_dialog.dart';
 import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/models/category_model.dart';
 import 'package:radhe/models/user_model.dart';
 import 'package:radhe/utils/process_indicator.dart';
 
 import '../../models/expenses_model.dart';
-import '../../models/product_model.dart';
 
 class DataController extends GetxController {
   RxList<UserModel> userList = <UserModel>[].obs;
@@ -38,6 +32,7 @@ class DataController extends GetxController {
     }
   }
 
+
   Stream<List<ExpenseModel>> getUserExpenses(String userId) {
     return FirebaseFirestore.instance
         .collection('expenses')
@@ -54,6 +49,23 @@ class DataController extends GetxController {
       return expenses;
     });
   }
+
+
+Stream<List<ExpenseModel>> getUserLastExpenses(String userId) {
+  return FirebaseFirestore.instance
+      .collection('expenses')
+      .where('userId', isEqualTo: userId)
+      .orderBy('date', descending: true)
+      .limit(2)
+      .snapshots()
+      .map((snapshot) {
+    return snapshot.docs
+        .map((doc) => ExpenseModel.fromJson(doc.data()))
+        .toList();
+  });
+}
+
+
 
   Stream<List<ExpenseModel>> getAllExpenses() {
     return FirebaseFirestore.instance

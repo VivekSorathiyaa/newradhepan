@@ -6,6 +6,7 @@ import 'package:radhe/app/components/buttons/text_button.dart';
 import 'package:radhe/app/components/common_methos.dart';
 import 'package:radhe/app/components/custom_dialog.dart';
 import 'package:radhe/app/components/input_text_field_widget.dart';
+import 'package:radhe/app/controller/auth_controller.dart';
 import 'package:radhe/app/controller/data_controller.dart';
 import 'package:radhe/app/utils/app_text_style.dart';
 import 'package:radhe/app/utils/colors.dart';
@@ -30,6 +31,7 @@ class UserExpensesScreen extends StatefulWidget {
 
 class _UserExpensesScreenState extends State<UserExpensesScreen> {
   var controller = Get.put(DataController());
+  var authController = Get.put(AuthController());
   final TextEditingController amountController = TextEditingController();
   // final TextEditingController descriptionController = TextEditingController();
 
@@ -45,7 +47,42 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                   style: AppTextStyle.homeAppbarTextStyle
                       .copyWith(color: primaryWhite)),
             )
-          : null,
+          : AppBar(
+              iconTheme: IconThemeData(
+                  color: primaryWhite), // Set the drawer icon color here
+              backgroundColor: appColor,
+              title: StreamBuilder<double>(
+                stream: controller.getTotalExpenseStream(
+                    widget.user.id), // Assuming you have userId available
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return SizedBox(); // Show loading indicator while fetching data
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    double totalExpense = snapshot.data ??
+                        0.0; // Get total expense from snapshot data
+                    return Text(
+                      'Total Udhar : $totalExpense', // Display the total expense
+                      style: AppTextStyle.homeAppbarTextStyle
+                          .copyWith(color: primaryWhite),
+                    );
+                  }
+                },
+              ),
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      CommonDialog.showConfirmationDialog(
+                          onOkPress: () {
+                            Get.back();
+                            authController.signOut();
+                          },
+                          context: context);
+                    },
+                    icon: Icon(Icons.logout))
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: appColor,
         child: Icon(
@@ -102,31 +139,33 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: ShadowContainerWidget(
-                color: appColor.withOpacity(.1),
-                blurRadius: 0,
-                borderColor: appColor,
-                widget: StreamBuilder<double>(
-                  stream: controller.getTotalExpenseStream(
-                      widget.user.id), // Assuming you have userId available
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return SizedBox(); // Show loading indicator while fetching data
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else {
-                      double totalExpense = snapshot.data ??
-                          0.0; // Get total expense from snapshot data
-                      return Text(
-                        'Total Udhar : $totalExpense', // Display the total expense
-                        style: AppTextStyle.normalBold16,
-                      );
-                    }
-                  },
-                )),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.all(20),
+          //   child: ShadowContainerWidget(
+          //       color: appColor.withOpacity(.1),
+          //       blurRadius: 0,
+          //       borderColor: appColor,
+          //       widget:
+
+          //        StreamBuilder<double>(
+          //         stream: controller.getTotalExpenseStream(
+          //             widget.user.id), // Assuming you have userId available
+          //         builder: (context, snapshot) {
+          //           if (snapshot.connectionState == ConnectionState.waiting) {
+          //             return SizedBox(); // Show loading indicator while fetching data
+          //           } else if (snapshot.hasError) {
+          //             return Text('Error: ${snapshot.error}');
+          //           } else {
+          //             double totalExpense = snapshot.data ??
+          //                 0.0; // Get total expense from snapshot data
+          //             return Text(
+          //               'Total Udhar : $totalExpense', // Display the total expense
+          //               style: AppTextStyle.normalBold16,
+          //             );
+          //           }
+          //         },
+          //       )),
+          // ),
           Expanded(
             child: ListView(
               // shrinkWrap: true,

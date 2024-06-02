@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:radhe/app/components/image/image_widget.dart';
 import 'package:radhe/app/pages/grand_total_screen.dart';
 import 'package:radhe/app/utils/app_text_style.dart';
 import 'package:radhe/app/utils/colors.dart';
@@ -45,9 +46,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: appColor.withOpacity(.2),
-                  child: Icon(
-                    CupertinoIcons.person,
-                    color: appColor,
+                  child: Obx(
+                    () => authController.currentUser.value == '' ||
+                            authController.currentUser.value == null
+                        ? Icon(
+                            CupertinoIcons.person,
+                            color: appColor,
+                          )
+                        : NetworkImageWidget(
+                            imageUrl: authController.currentUser.value.imageUrl,
+                          ),
                   ),
                 ),
                 width10,
@@ -55,22 +63,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "${authController.currentUserModel.name}",
-                        style:
-                            AppTextStyle.normalBold16.copyWith(color: appColor),
-                      ),
-                      Text(
-                        "${authController.currentUserModel.phone}",
-                        style: AppTextStyle.normalRegular14
-                            .copyWith(color: primaryBlack, fontFamily: ''),
-                      ),
-                      if (authController.currentUserModel.businessName != "")
-                        Text(
-                          "${authController.currentUserModel.businessName}",
-                          style: AppTextStyle.normalRegular14
+                      Obx(
+                        () => Text(
+                          "${authController.currentUser.value.name}",
+                          style: AppTextStyle.normalBold16
                               .copyWith(color: appColor),
                         ),
+                      ),
+                      Obx(
+                        () => Text(
+                          "${authController.currentUser.value.phone}",
+                          style: AppTextStyle.normalRegular14
+                              .copyWith(color: primaryBlack, fontFamily: ''),
+                        ),
+                      ),
+                      Obx(() =>
+                          authController.currentUser.value.businessName != ""
+                              ? Text(
+                                  "${authController.currentUser.value.businessName}",
+                                  style: AppTextStyle.normalRegular14
+                                      .copyWith(color: appColor),
+                                )
+                              : SizedBox()),
                     ],
                   ),
                 ),
@@ -88,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leading: Icon(Icons.edit),
                     onTap: () {
                       Get.to(() => CreateAccountScreen(
-                            userModel: authController.currentUserModel,
+                            userModel: authController.currentUser.value,
                           ));
                       // Navigate to Edit Profile screen
                     },

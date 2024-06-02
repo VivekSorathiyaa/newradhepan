@@ -11,7 +11,6 @@ class CommonImagePicker {
   openCustomFilePickerSheet(
       {required BuildContext context,
       bool isMultipleSelection = false,
-
       required Function(dynamic selectedFile) onTap}) async {
     showModalBottomSheet(
       isScrollControlled: true,
@@ -75,22 +74,22 @@ class CommonImagePicker {
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
-                  ListTile(
-                    onTap: () {
-                      onTap(getVideoFromCamera());
-                    },
-                    leading: const Padding(
-                      padding: EdgeInsets.only(right: 10.0, left: 15),
-                      child: Icon(
-                        CupertinoIcons.camera,
-                        size: 20,
-                      ),
-                    ),
-                    title: const Text(
-                      "Video",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
+                  // ListTile(
+                  //   onTap: () {
+                  //     onTap(getVideoFromCamera());
+                  //   },
+                  //   leading: const Padding(
+                  //     padding: EdgeInsets.only(right: 10.0, left: 15),
+                  //     child: Icon(
+                  //       CupertinoIcons.camera,
+                  //       size: 20,
+                  //     ),
+                  //   ),
+                  //   title: const Text(
+                  //     "Video",
+                  //     style: TextStyle(fontSize: 14),
+                  //   ),
+                  // ),
                   ListTile(
                     onTap: () {
                       onTap(getFromGallery());
@@ -107,22 +106,22 @@ class CommonImagePicker {
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
-                  ListTile(
-                    onTap: () {
-                      onTap(getVideoFromGallery());
-                    },
-                    leading: const Padding(
-                      padding: EdgeInsets.only(right: 10.0, left: 15),
-                      child: Icon(
-                        CupertinoIcons.photo_on_rectangle,
-                        size: 20,
-                      ),
-                    ),
-                    title: const Text(
-                      "Upload video from gallery",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
+                  // ListTile(
+                  //   onTap: () {
+                  //     onTap(getVideoFromGallery());
+                  //   },
+                  //   leading: const Padding(
+                  //     padding: EdgeInsets.only(right: 10.0, left: 15),
+                  //     child: Icon(
+                  //       CupertinoIcons.photo_on_rectangle,
+                  //       size: 20,
+                  //     ),
+                  //   ),
+                  //   title: const Text(
+                  //     "Upload video from gallery",
+                  //     style: TextStyle(fontSize: 14),
+                  //   ),
+                  // ),
                 ],
               ),
             )
@@ -151,8 +150,6 @@ class CommonImagePicker {
   //     });
   //   }
   // }
-
-
 
   Future<File?> getFromCamera() async {
     XFile? image = await ImagePicker().pickImage(

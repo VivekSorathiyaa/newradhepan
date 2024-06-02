@@ -51,6 +51,11 @@ class CommonMethod {
     return formatter.format(dateTime);
   }
 
+  static String formatTime(DateTime dateTime) {
+    final DateFormat formatter = DateFormat('hh:mm a');
+    return formatter.format(dateTime);
+  }
+
   String getFirstWords(String sentence, int wordCounts) {
     return sentence.split(" ").sublist(0, wordCounts).join(" ");
   }
