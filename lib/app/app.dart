@@ -9,14 +9,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:radhe/app/utils/global_singlton.dart';
 import 'pages/authentication/login_screen.dart';
 import 'pages/main_home_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-final dataStorage = GetStorage();
-  User? currentUser = FirebaseAuth.instance.currentUser;
-
+// final dataStorage = GetStorage();
+User? currentUser = FirebaseAuth.instance.currentUser;
 
 final StreamController<String?> selectNotificationStream =
     StreamController<String?>.broadcast();
@@ -87,8 +85,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
   }
 
   setToken(String? deviceToken) async {
-    dataStorage.write('FCMToken', deviceToken.toString());
-    GlobalSingleton().deviceToken = deviceToken.toString();
+    // GlobalSingleton().deviceToken = deviceToken.toString();
   }
 
   notificationPermision() async {
@@ -155,21 +152,6 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
     selectNotificationStream.close();
     super.dispose();
   }
-
-  // @override
-  // void didChangeAppLifecycleState(AppLifecycleState state) {
-  //   log("---life--->> ${state}");
-  //   if (state == AppLifecycleState.paused) {
-  //     _timer = Timer(Duration(minutes: 1), () {
-  //       // Restart the app
-  //       log("Restart Application");
-  //       SystemNavigator.pop();
-  //       runApp(RadheApp());
-  //     });
-  //   } else if (state == AppLifecycleState.resumed) {
-  //     _timer?.cancel();
-  //   }
-  // }
 
   showNotification(String title, String message, dynamic payload) async {
     var android = const AndroidNotificationDetails(
@@ -275,7 +257,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
         // backgroundColor: primaryWhite,
         // scaffoldBackgroundColor: primaryWhite,
         // fontFamily: 'Catamaran',
-                textTheme: GoogleFonts.robotoTextTheme(),
+        textTheme: GoogleFonts.robotoTextTheme(),
 
         // hintColor: regularGrey,
         // iconTheme: const IconThemeData(

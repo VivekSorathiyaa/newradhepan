@@ -22,6 +22,10 @@ class AppConstants {
       "https://radhe-files.s3-accelerate.amazonaws.com/";
 
   ///apis
+  static String fcmGoogleApiUrl = 'https://fcm.googleapis.com/fcm/send';
+
+  static const String firebaseServerKey =
+      'AAAAJj823eM:APA91bGYdfLlg9MJSVrJdk7gVPCtCxvCdT6-_qfa-Qb2sLbbb0tjaBKHs5wSgNq13QyWBUlsjIx4d6uXdR90jgCECZ6-3Mud8kemX2VRq9Jt14h32Iv3jwo9sAnWJq6yP_V9i8PcQw1N'; // Replace w
 
   // Authentication
   static const String login = 'user/login';

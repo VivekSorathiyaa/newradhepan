@@ -1,13 +1,17 @@
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:radhe/app/app.dart';
 import 'package:radhe/app/components/common_methos.dart';
 import 'package:radhe/app/controller/data_controller.dart';
 import 'package:radhe/app/pages/main_home_screen.dart';
+import 'package:radhe/app/pages/notification_service.dart';
 import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/main.dart';
 import 'package:radhe/models/user_model.dart';
@@ -30,24 +34,58 @@ class AuthController extends GetxController {
           createdBy: "",
           password: "",
           businessName: '',
-          imageUrl: '')
+          imageUrl: '',
+          deviceToken: '',
+          accessToken: '')
       .obs;
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var dataController = Get.put(DataController());
-  Future getUserById(String userId) async {
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  Future getCurrentUser() async {
+    try {
+      final currentUserUid = auth.currentUser?.uid;
+      if (currentUserUid == null) {
+        print('No user is currently signed in.');
+        return null;
+      }
+
+      final snapshot =
+          await _firestore.collection('users').doc(currentUserUid).get();
+      if (!snapshot.exists) {
+        print('User document with ID $currentUserUid does not exist');
+        return null;
+      }
+
+      final userData = snapshot.data();
+      if (userData == null) {
+        print('User data is null.');
+        return null;
+      }
+
+      currentUser.value = UserModel.fromJson(userData as Map<String, dynamic>);
+      currentUser.refresh();
+      update();
+    } catch (e) {
+      print('Error fetching user document: $e');
+      return null;
+    }
+  }
+
+  Future<UserModel?> getUserById(String userId) async {
     try {
       DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .get();
+
       if (snapshot.exists) {
         Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
-        currentUser.value = UserModel.fromJson(userData);
-        update();
+        return UserModel.fromJson(userData);
       } else {
         print('User document with ID $userId does not exist');
-        return null;
+        return null; // Return null if the document doesn't exist
       }
     } catch (e) {
       print('Error fetching user document: $e');
@@ -68,8 +106,45 @@ class AuthController extends GetxController {
     return downloadUrl;
   }
 
-  Future regiterUser(
-      {required BuildContext context, required File imageFile}) async {
+  // Future<void> updateUserToken() async {
+  //   try {
+  //     // Get the current user
+  //     User? user = auth.currentUser;
+  //     if (user == null) {
+  //       throw Exception("No user logged in");
+  //     }
+
+  //     // Get the ID token of the user
+  //     String idToken = await user.getIdToken() ?? '';
+
+  //     // Request permission to receive notifications
+  //     NotificationSettings settings =
+  //         await _firebaseMessaging.requestPermission(
+  //       alert: true,
+  //       badge: true,
+  //       sound: true,
+  //     );
+
+  //     if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+  //       throw Exception("User denied notification permission");
+  //     }
+
+  //     // Update the tokens in Firestore
+  //     await _firestore.collection('users').doc(user.uid).update({
+  //       'token': idToken,
+  //     });
+
+  //     print('Device token and ID token updated successfully');
+  //     print('ID token: $idToken');
+  //   } catch (e) {
+  //     print('Failed to update device token: $e');
+  //   }
+  // }
+
+  Future regiterUser({
+    required BuildContext context,
+    required File imageFile,
+  }) async {
     processIndicator.show(context);
     try {
       if (passwordController.text != confirmPasswordController.text) {
@@ -85,23 +160,29 @@ class AuthController extends GetxController {
       String imageUrl = await uploadUserImage(imageFile);
 
       UserModel userModel = UserModel(
-          id: userCredential.user!.uid,
-          name: nameController.text.trim(),
-          phone: phoneController.text.trim(),
-          createdBy: adminId,
-          password: passwordController.text.trim(),
-          businessName: businessController.text.trim(),
-          imageUrl: imageUrl);
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set(userModel.toJson());
+        id: userCredential.user!.uid,
+        name: nameController.text.trim(),
+        phone: phoneController.text.trim(),
+        createdBy: '',
+        password: passwordController.text.trim(),
+        businessName: businessController.text.trim(),
+        imageUrl: imageUrl,
+        deviceToken: '', accessToken: '',
+      );
+
+      DocumentReference userDocRef =
+          _firestore.collection('users').doc(userModel.id);
+
+      await userDocRef.update(userModel.toJson());
+
+      NotificationService().updateUserToken();
+      
       processIndicator.hide(context);
 
       CommonMethod.getXSnackBar("Success",
           "Registration successful: ${userCredential.user!.uid}", success);
 
-      reLoginAdmin();
+      reLoginAdmin(userDocRef);
 
       print('Registration successful: ${userCredential.user!.uid}');
     } catch (e) {
@@ -111,15 +192,18 @@ class AuthController extends GetxController {
     }
   }
 
-  Future reLoginAdmin() async {
+  Future reLoginAdmin(DocumentReference? reference) async {
     await FirebaseAuth.instance.signOut();
     UserCredential adminCredential = await auth
         .signInWithEmailAndPassword(
-          email: adminId + '@example.com',
+          email: adminPhone + '@example.com',
           password: adminPassword,
         )
         .whenComplete(() => null);
 
+    if (reference != null) {
+      await reference.update({'createdBy': adminCredential.user!.uid});
+    }
     Get.off(() => MainHomeScreen());
   }
 
@@ -185,7 +269,9 @@ class AuthController extends GetxController {
           ? await uploadUserImage(userImage)
           : networkUrl.toString();
 
-      await _firestore.collection('users').doc(userId).update({
+      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
+
+      await userDocRef.update({
         'name': nameController.text,
         'phone': phoneController.text,
         'password': passwordController.text,
@@ -196,7 +282,7 @@ class AuthController extends GetxController {
       processIndicator.hide(context);
       CommonMethod.getXSnackBar(
           "Success", "User details updated successfully", success);
-      reLoginAdmin();
+      reLoginAdmin(userDocRef);
 
       print('User details updated successfully');
     } catch (e) {
@@ -224,7 +310,7 @@ class AuthController extends GetxController {
         await user.delete();
         processIndicator.hide(context);
 
-        reLoginAdmin();
+        reLoginAdmin(null);
         CommonMethod.getXSnackBar("Success",
             "User deleted successfully from Firebase Authentication", success);
         dataController.fetchUsers();

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:radhe/app/components/simmer/simmer_gig_tile_widget.dart';
 import 'package:radhe/app/components/simmer/transaction_simmer.dart';
+import 'package:radhe/app/controller/auth_controller.dart';
 import 'package:radhe/app/controller/data_controller.dart';
 import '../../models/expenses_model.dart';
 import '../../models/user_model.dart';
@@ -22,6 +23,7 @@ class TransactionScreen extends StatefulWidget {
 
 class _TransactionScreenState extends State<TransactionScreen> {
   var dataController = Get.put(DataController());
+  var authController = Get.put(AuthController());
 
   @override
   void initState() {
@@ -50,9 +52,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Shope Book",
-          style: AppTextStyle.homeAppbarTextStyle,
+        title: Obx(
+          () => Text(
+            authController.currentUser.value.businessName ?? "Shop Book",
+            style: AppTextStyle.homeAppbarTextStyle,
+          ),
         ),
         automaticallyImplyLeading: false,
         backgroundColor: appColor,

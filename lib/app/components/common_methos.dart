@@ -1,17 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:radhe/app/app.dart';
 import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/app/utils/static_decoration.dart';
+import 'package:radhe/models/user_model.dart';
+import 'package:radhe/utils/app_constants.dart';
+import 'package:http/http.dart' as http;
 
 import '../pages/authentication/login_screen.dart';
 import '../utils/app_text_style.dart';
 
-import '../widget/shodow_container_widget.dart';
 import 'package:intl/intl.dart';
 
 extension StringExtension on String {
@@ -25,13 +26,13 @@ class CommonMethod {
     Get.to(() => LoginScreen());
   }
 
-  checkIsLogin(Widget redirectionWidget) {
-    if (dataStorage.read('id') == null) {
-      goToLoginScreen();
-    } else {
-      Get.to(() => redirectionWidget);
-    }
-  }
+  // checkIsLogin(Widget redirectionWidget) {
+  //   if (dataStorage.read('id') == null) {
+  //     goToLoginScreen();
+  //   } else {
+  //     Get.to(() => redirectionWidget);
+  //   }
+  // }
 
   int calculateAge(DateTime birthday) {
     log("---birthday--${birthday}");
@@ -55,6 +56,75 @@ class CommonMethod {
     final DateFormat formatter = DateFormat('hh:mm a');
     return formatter.format(dateTime);
   }
+
+  // static Future<void> sendNotification(
+  //     {
+  //     // required List<String> deviceTokens,
+  //     required String title,
+  //     required UserModel user,
+  //     required String body}) async {
+  //   final headers = {
+  //     'Content-Type': 'application/json',
+  //     // 'Authorization': 'key=${AppConstants.firebaseServerKey}',
+
+  //     'Authorization': 'key=${await currentUser!.getIdToken()}',
+  //   };
+  //   log("---headers------${headers.toString()}");
+  //   final message = {
+  //     'registration_ids': [user.token],
+  //     'data': {
+  //       'title': title,
+  //       'body': body,
+  //       'user': user.toJson(),
+  //       'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+  //     },
+  //   };
+
+  //     final url = Uri.parse('https://fcm.googleapis.com/v1/projects/YOUR_PROJECT_ID/messages:send');
+
+  //   final response = await http.post(Uri.parse(AppConstants.fcmGoogleApiUrl),
+  //       headers: headers, body: json.encode(message));
+
+  //   print('----response----${response.body.toString()}');
+  //   if (response.statusCode == 200) {
+  //     print('Notification sent successfully to multiple users');
+  //   } else {
+  //     print('Failed to send notification');
+  //   }
+  // }
+
+  // static Future<void> sendFCMNotification(
+  //     {required String idToken,
+  //     required String targetToken,
+  //     required String title,
+  //     required String data}) async {
+  //   final url = Uri.parse(
+  //       'https://fcm.googleapis.com/v1/projects/radhepan-5e6db/messages:send');
+
+  //   final headers = {
+  //     'Authorization': 'Bearer $idToken',
+  //     'Content-Type': 'application/json',
+  //   };
+
+  //   log("----headers----$headers");
+  //   final body = jsonEncode({
+  //     'message': {
+  //       'token': targetToken,
+  //       'notification': {
+  //         'title': title,
+  //         'body': data,
+  //       },
+  //     },
+  //   });
+
+  //   final response = await http.post(url, headers: headers, body: body);
+
+  //   if (response.statusCode == 200) {
+  //     print('Notification sent successfully');
+  //   } else {
+  //     print('Failed to send notification: ${response.body}');
+  //   }
+  // }
 
   String getFirstWords(String sentence, int wordCounts) {
     return sentence.split(" ").sublist(0, wordCounts).join(" ");

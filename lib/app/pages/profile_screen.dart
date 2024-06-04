@@ -23,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void initState() {
-    authController.getUserById(authController.auth.currentUser!.uid);
+    authController.getCurrentUser();
     super.initState();
   }
 
@@ -55,6 +55,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         : NetworkImageWidget(
                             imageUrl: authController.currentUser.value.imageUrl,
+                            borderRadius: BorderRadius.circular(30),
+                            fit: BoxFit.cover,
+                            width: Get.width,
+                            height: Get.height,
                           ),
                   ),
                 ),

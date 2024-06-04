@@ -26,74 +26,74 @@ class _GrandTotalScreenState extends State<GrandTotalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            "Grand Total",
-            style: AppTextStyle.homeAppbarTextStyle,
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Grand Total",
+          style: AppTextStyle.homeAppbarTextStyle,
         ),
-        backgroundColor: backgroundColor,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(25),
-            child: Column(
-              children: [
-                ShadowContainerWidget(
-                  widget: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Text("Total Expense"),
-                        ],
-                      ),
-                      StreamBuilder<double>(
-                        stream: dataController
-                            .getAllTotalExpenseStream(), // Assuming you have userId available
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return SizedBox(); // Show loading indicator while fetching data
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else {
-                            double totalExpense = snapshot.data ??
-                                0.0; // Get total expense from snapshot data
-                            return Text(
-                              '₹ ${totalExpense.round()}', // Display the total expense
-                              style: AppTextStyle.normalBold26
-                                  .copyWith(fontFamily: '', color: appColor),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+        iconTheme: IconThemeData(color: primaryWhite),
+        backgroundColor: appColor,
+      ),
+      backgroundColor: backgroundColor,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(25),
+          child: Column(
+            children: [
+              ShadowContainerWidget(
+                widget: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text("Total Expense"),
+                      ],
+                    ),
+                    StreamBuilder<double>(
+                      stream: dataController
+                          .getAllTotalExpenseStream(), // Assuming you have userId available
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return SizedBox(); // Show loading indicator while fetching data
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          double totalExpense = snapshot.data ??
+                              0.0; // Get total expense from snapshot data
+                          return Text(
+                            '₹ ${totalExpense.round()}', // Display the total expense
+                            style: AppTextStyle.normalBold26
+                                .copyWith(fontFamily: '', color: appColor),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                height20,
-                ShadowContainerWidget(
-                  widget: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Text("Total Users"),
-                        ],
-                      ),
-                      Text(
-                        '${dataController.userList.length - 1}', // Display the total expense
-                        style: AppTextStyle.normalBold26
-                            .copyWith(fontFamily: ',', color: appColor),
-                      ),
-                    ],
-                  ),
+              ),
+              height20,
+              ShadowContainerWidget(
+                widget: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text("Total Users"),
+                      ],
+                    ),
+                    Text(
+                      '${dataController.userList.length - 1}', // Display the total expense
+                      style: AppTextStyle.normalBold26
+                          .copyWith(fontFamily: ',', color: appColor),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

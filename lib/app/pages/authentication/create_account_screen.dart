@@ -1,16 +1,14 @@
+// ignore_for_file: must_be_immutable
+
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:radhe/app/components/buttons/text_button.dart';
-import 'package:radhe/app/components/custom_dialog.dart';
 import 'package:radhe/app/components/input_text_field_widget.dart';
 import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/utils/app_asset.dart';
 import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/app/utils/static_decoration.dart';
 import 'package:radhe/app/utils/validator.dart';
@@ -21,7 +19,6 @@ import '../../components/common_methos.dart';
 import '../../components/image/image_widget.dart';
 import '../../utils/ui.dart';
 import '../../widget/common_image_picker.dart';
-import 'login_screen.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   UserModel? userModel;
@@ -44,8 +41,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       authController.businessController.text = widget.userModel!.businessName;
       authController.confirmPasswordController.text =
           widget.userModel!.password;
-      setState(() {});
+    } else {
+      authController.nameController.clear();
+      authController.phoneController.clear();
+      authController.passwordController.clear();
+      authController.businessController.clear();
+      authController.confirmPasswordController.clear();
     }
+    setState(() {});
+
     super.initState();
   }
 
@@ -205,7 +209,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       // authController.registerUserWithEmailPassword(
                       //     context, _formKey);
                     },
-                    title: "Sign Up",
+                    title: widget.userModel != null ? "Update" : "Sign Up",
                   ),
                   // height20,
                   // Platform.isIOS

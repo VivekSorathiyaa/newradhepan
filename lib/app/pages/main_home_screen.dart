@@ -15,6 +15,7 @@ import 'package:radhe/app/widget/shodow_container_widget.dart';
 import 'package:radhe/main.dart';
 
 import 'all_user_screen.dart';
+import 'notification_service.dart';
 import 'user_expenses_screen.dart';
 
 class MainHomeScreen extends StatefulWidget {
@@ -43,104 +44,78 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   @override
   void initState() {
-    authController
-        .getUserById(authController.auth.currentUser!.uid)
-        .whenComplete(() => setState(() {}));
+    authController.getCurrentUser().whenComplete(() => setState(() {}));
+    // authController.updateUserToken();
+    NotificationService().updateUserToken();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-          backgroundColor: backgroundColor,
-          // appBar: AppBar(
-          //   iconTheme: IconThemeData(
-          //       color: primaryWhite), // Set the drawer icon color here
-
-          //   backgroundColor: appColor,
-          //   title: Text('shop book - ${authController.currentUserModel.name}',
-          //       style: AppTextStyle.homeAppbarTextStyle
-          //           .copyWith(color: primaryWhite)),
-          //   actions: [
-          //     IconButton(
-          //         onPressed: () {
-          //           CommonDialog.showConfirmationDialog(
-          //               onOkPress: () {
-          //                 Get.back();
-          //                 authController.logoutUser(context);
-          //               },
-          //               context: context);
-          //         },
-          //         icon: Icon(
-          //           Icons.logout,
-          //           color: primaryWhite,
-          //         ))
-          //   ],
-          // ),
-          bottomNavigationBar: authController.currentUser.value.phone == adminId
-              ? Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30.0),
-                      topRight: Radius.circular(30.0),
-                    ),
-                    color: Colors.transparent,
-                    boxShadow: [
-                      BoxShadow(
-                        color: appColor.withOpacity(.3),
-                        spreadRadius: 2,
-                        blurRadius: 7,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      bottomNavigationBar: authController.currentUser.value.phone == adminPhone
+          ? Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30.0),
+                  topRight: Radius.circular(30.0),
+                ),
+                color: Colors.transparent,
+                boxShadow: [
+                  BoxShadow(
+                    color: appColor.withOpacity(.3),
+                    spreadRadius: 2,
+                    blurRadius: 7,
+                    offset: Offset(0, 3),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30.0),
-                      topRight: Radius.circular(30.0),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30.0),
+                  topRight: Radius.circular(30.0),
+                ),
+                child: BottomNavigationBar(
+                  selectedIconTheme:
+                      IconThemeData(color: appColor), // Color of selected icon
+                  unselectedIconTheme: IconThemeData(
+                      color: Colors.grey), // Color of unselected icon
+                  elevation: 13, // Elevation of the bottom navigation bar
+                  backgroundColor: Colors
+                      .white, // Background color of the bottom navigation bar
+                  items: <BottomNavigationBarItem>[
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.attach_money),
+                      label: 'Transactions',
                     ),
-                    child: BottomNavigationBar(
-                      selectedIconTheme: IconThemeData(
-                          color: appColor), // Color of selected icon
-                      unselectedIconTheme: IconThemeData(
-                          color: Colors.grey), // Color of unselected icon
-                      elevation: 13, // Elevation of the bottom navigation bar
-                      backgroundColor: Colors
-                          .white, // Background color of the bottom navigation bar
-                      items: <BottomNavigationBarItem>[
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.attach_money),
-                          label: 'Transactions',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.people),
-                          label: 'Customers',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.person),
-                          label: 'Profile',
-                        ),
-                      ],
-                      currentIndex: _selectedIndex,
-                      selectedItemColor:
-                          appColor, // Color of the selected item text and icon
-                      unselectedLabelStyle: TextStyle(
-                          color: Colors.grey), // Style of unselected item label
-                      onTap: _onItemTapped,
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.people),
+                      label: 'Customers',
                     ),
-                  ),
-                )
-              : null,
-          body:
-          Obx(() => 
-          
-           authController.currentUser.value.phone == adminId
-              ? _widgetOptions.elementAt(_selectedIndex)
-              : UserExpensesScreen(
-                  user: authController.currentUser.value,
-                  isAdmin: false,
-                ),),),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.person),
+                      label: 'Profile',
+                    ),
+                  ],
+                  currentIndex: _selectedIndex,
+                  selectedItemColor:
+                      appColor, // Color of the selected item text and icon
+                  unselectedLabelStyle: TextStyle(
+                      color: Colors.grey), // Style of unselected item label
+                  onTap: _onItemTapped,
+                ),
+              ),
+            )
+          : null,
+      body: Obx(
+        () => authController.currentUser.value.phone == adminPhone
+            ? _widgetOptions.elementAt(_selectedIndex)
+            : UserExpensesScreen(
+                user: authController.currentUser.value,
+                isAdmin: false,
+              ),
+      ),
     );
   }
 

@@ -8,6 +8,8 @@ class UserModel {
   String createdBy;
   String password;
   String businessName;
+  String deviceToken;
+  String accessToken;
 
   UserModel({
     required this.id,
@@ -17,6 +19,8 @@ class UserModel {
     required this.createdBy,
     required this.password,
     required this.businessName,
+    required this.deviceToken,
+    required this.accessToken, 
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,8 @@ class UserModel {
       createdBy: json['createdBy'] ?? '',
       password: json['password'] ?? '',
       businessName: json['businessName'] ?? '',
+      deviceToken: json['deviceToken'] ?? '',
+      accessToken: json['accessToken'] ?? '',
     );
   }
 
@@ -40,6 +46,8 @@ class UserModel {
       'createdBy': createdBy,
       'password': password,
       'businessName': businessName,
+      'deviceToken': deviceToken,
+      'accessToken': accessToken,
     };
   }
 }

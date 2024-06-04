@@ -412,7 +412,7 @@ TextFormField textFormField({
       contentPadding:
           contentPadding ?? const EdgeInsets.fromLTRB(20, 10, 10, 10),
       border: OutlineInputBorder(
-          borderRadius: circular15BorderRadius, borderSide: BorderSide.none),
+          borderRadius: circular10BorderRadius, borderSide: BorderSide.none),
       errorMaxLines: 5,
       counterText: "",
       errorStyle: TextStyle(color: red),

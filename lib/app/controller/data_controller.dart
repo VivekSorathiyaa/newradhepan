@@ -1,9 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:radhe/app/components/common_methos.dart';
+import 'package:radhe/app/controller/auth_controller.dart';
+import 'package:radhe/app/pages/notification_service.dart';
 import 'package:radhe/app/utils/colors.dart';
 import 'package:radhe/models/user_model.dart';
 import 'package:radhe/utils/process_indicator.dart';
@@ -17,21 +18,30 @@ class DataController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchUsers();
+    fetchUsers().listen((users) {
+      userList.assignAll(users);
+    });
   }
 
-  Future fetchUsers() async {
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection('users').get();
-      userList.assignAll(
-          snapshot.docs.map((doc) => UserModel.fromJson(doc.data())).toList());
-      userList.refresh();
-    } catch (e) {
-      print('Error fetching users: $e');
-    }
+  Stream<List<UserModel>> fetchUsers() {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .snapshots()
+        .map((query) {
+      return query.docs.map((doc) => UserModel.fromJson(doc.data())).toList();
+    });
   }
-
+  // Future fetchUsers() async {
+  //   try {
+  //     final snapshot =
+  //         await FirebaseFirestore.instance.collection('users').get();
+  //     userList.assignAll(
+  //         snapshot.docs.map((doc) => UserModel.fromJson(doc.data())).toList());
+  //     userList.refresh();
+  //   } catch (e) {
+  //     print('Error fetching users: $e');
+  //   }
+  // }
 
   Stream<List<ExpenseModel>> getUserExpenses(String userId) {
     return FirebaseFirestore.instance
@@ -50,22 +60,35 @@ class DataController extends GetxController {
     });
   }
 
+  Stream<List<ExpenseModel>> getUserLastExpenses(String userId) {
+// Stream<List<ExpenseModel>> getUserLastExpenses(String userId) {
+    return FirebaseFirestore.instance
+        .collection('expenses')
+        .where('userId', isEqualTo: userId)
+        .orderBy('date',
+            descending: true) // Order by 'date' field in descending order
+        .limit(2) // Limiting the number of documents retrieved to 2
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) =>
+                ExpenseModel.fromJson(doc.data() as Map<String, dynamic>))
+            .toList());
+// }
+  }
 
-Stream<List<ExpenseModel>> getUserLastExpenses(String userId) {
-  return FirebaseFirestore.instance
-      .collection('expenses')
-      .where('userId', isEqualTo: userId)
-      .orderBy('date', descending: true)
-      .limit(2)
-      .snapshots()
-      .map((snapshot) {
-    return snapshot.docs
-        .map((doc) => ExpenseModel.fromJson(doc.data()))
-        .toList();
-  });
-}
-
-
+// Stream<List<ExpenseModel>> getUserLastExpenses(String userId) {
+//   return FirebaseFirestore.instance
+//       .collection('expenses')
+//       .where('userId', isEqualTo: userId)
+//       .orderBy('date', descending: true)
+//       .limit(2)
+//       .snapshots()
+//       .map((snapshot) {
+//     return snapshot.docs
+//         .map((doc) => ExpenseModel.fromJson(doc.data()))
+//         .toList();
+//   });
+// }
 
   Stream<List<ExpenseModel>> getAllExpenses() {
     return FirebaseFirestore.instance
@@ -86,44 +109,64 @@ Stream<List<ExpenseModel>> getUserLastExpenses(String userId) {
   Future addExpense({
     required double amount,
     // required String description,
-    required String userId,
+    required UserModel userModel,
+    required AuthController authController,
     required BuildContext context,
   }) async {
     processIndicator.show(context);
-    try {
-      // Add expense to 'expenses' collection
-      DocumentReference expenseRef = await FirebaseFirestore.instance
-          .collection('expenses')
-          .add(ExpenseModel(
-            id: '',
-            userId: userId,
-            amount: amount,
-            // description: description,
-            date: DateTime.now(),
-          ).toJson());
+    // try {
+    // Add expense to 'expenses' collection
+    DocumentReference expenseRef = await FirebaseFirestore.instance
+        .collection('expenses')
+        .add(ExpenseModel(
+          id: '',
+          userId: userModel.id,
+          amount: amount,
+          // description: description,
+          date: DateTime.now(),
+        ).toJson());
 
-      // Get the document ID of the newly added expense
-      String expenseId = expenseRef.id;
+    // Get the document ID of the newly added expense
+    String expenseId = expenseRef.id;
 
-      // Update the same document in the 'expenses' collection with additional data
-      await FirebaseFirestore.instance
-          .collection('expenses')
-          .doc(expenseId)
-          .update({
-        'id': expenseId,
-      });
+    // Update the same document in the 'expenses' collection with additional data
+    await FirebaseFirestore.instance
+        .collection('expenses')
+        .doc(expenseId)
+        .update({
+      'id': expenseId,
+    });
 
-      processIndicator.hide(context);
-      CommonMethod.getXSnackBar(
-        "Success",
-        "Expense added successfully",
-        success,
-      );
-      print('Expense added successfully');
-    } catch (e) {
-      processIndicator.hide(context);
-      CommonMethod.getXSnackBar("Failed", "Error adding expense: $e", red);
-    }
+    processIndicator.hide(context);
+
+    var receiverUser = await authController.getUserById(userModel.createdBy);
+
+    NotificationService().sendFCMNotification(
+        accessToken: userModel.accessToken,
+        deviceToken: receiverUser!.deviceToken);
+
+    // await CommonMethod().sendFCMNotification(
+    //     title: userModel.name,
+    //     // user: userModel,
+    //     data: '${receiverUser!.businessName} ${userModel.name} ${amount}',
+    //     idToken: userModel.id,
+    //     targetToken: receiverUser.token);
+
+    // await CommonMethod.sendNotification(
+    //     title: userModel.name,
+    //     user: userModel,
+    //     body: '${receiverUser!.businessName} ${userModel.name} ${amount}');
+
+    // CommonMethod.getXSnackBar(
+    //   "Success",
+    //   "Expense added successfully",
+    //   success,
+    // );
+    print('Expense added successfully');
+    // } catch (e) {
+    //   processIndicator.hide(context);
+    //   CommonMethod.getXSnackBar("Failed", "Error adding expense: $e", red);
+    // }
   }
 
   Future updateExpense({
