@@ -7,15 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:radhe/app/app.dart';
-import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/controller/data_controller.dart';
-import 'package:radhe/app/pages/main_home_screen.dart';
-import 'package:radhe/app/pages/notification_service.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/main.dart';
-import 'package:radhe/models/user_model.dart';
-import 'package:radhe/utils/process_indicator.dart';
+import 'package:shopbook/app/app.dart';
+import 'package:shopbook/app/components/common_methos.dart';
+import 'package:shopbook/app/controller/data_controller.dart';
+import 'package:shopbook/app/pages/main_home_screen.dart';
+import 'package:shopbook/app/pages/notification_service.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/main.dart';
+import 'package:shopbook/models/user_model.dart';
+import 'package:shopbook/utils/process_indicator.dart';
 
 import '../pages/authentication/login_screen.dart';
 
@@ -36,14 +36,14 @@ class AuthController extends GetxController {
           businessName: '',
           imageUrl: '',
           deviceToken: '',
-          accessToken: '')
+          accessToken: '', showTotal: false)
       .obs;
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var dataController = Get.put(DataController());
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
-  Future getCurrentUser() async {
+  Future<UserModel?> getCurrentUser() async {
     try {
       final currentUserUid = auth.currentUser?.uid;
       if (currentUserUid == null) {
@@ -64,9 +64,13 @@ class AuthController extends GetxController {
         return null;
       }
 
-      currentUser.value = UserModel.fromJson(userData as Map<String, dynamic>);
+      final user = UserModel.fromJson(userData as Map<String, dynamic>);
+      currentUser.value = user;
       currentUser.refresh();
+      NotificationService().updateUserToken(currentUser.value.id);
       update();
+
+      return user;
     } catch (e) {
       print('Error fetching user document: $e');
       return null;
@@ -141,7 +145,7 @@ class AuthController extends GetxController {
   //   }
   // }
 
-  Future regiterUser({
+  Future registerUser({
     required BuildContext context,
     required File imageFile,
   }) async {
@@ -152,13 +156,17 @@ class AuthController extends GetxController {
         CommonMethod.getXSnackBar("Error", "Password do not match", red);
         return;
       }
+
+      // Create user with email and password
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: phoneController.text.trim() + '@example.com',
         password: passwordController.text.trim(),
       );
 
+      // Upload user image
       String imageUrl = await uploadUserImage(imageFile);
 
+      // Construct user model
       UserModel userModel = UserModel(
         id: userCredential.user!.uid,
         name: nameController.text.trim(),
@@ -167,44 +175,51 @@ class AuthController extends GetxController {
         password: passwordController.text.trim(),
         businessName: businessController.text.trim(),
         imageUrl: imageUrl,
-        deviceToken: '', accessToken: '',
+        deviceToken: '',
+        accessToken: '', showTotal: false,
       );
 
+      // Get DocumentReference
       DocumentReference userDocRef =
           _firestore.collection('users').doc(userModel.id);
 
-      await userDocRef.update(userModel.toJson());
+// Update user document
+      await userDocRef.set(userModel.toJson()).then((_) {
+        // Success, perform any additional operations if needed
+      }).catchError((error) {
+        // Handle error
+        print("Error updating user document: $error");
+      });
 
-      NotificationService().updateUserToken();
-      
+      await NotificationService().updateUserToken(userModel.id);
+
       processIndicator.hide(context);
-
       CommonMethod.getXSnackBar("Success",
           "Registration successful: ${userCredential.user!.uid}", success);
 
-      reLoginAdmin(userDocRef);
-
       print('Registration successful: ${userCredential.user!.uid}');
+      reLoginAdmin(userDocRef);
     } catch (e) {
       processIndicator.hide(context);
-      CommonMethod.getXSnackBar("Error", "Registration ailed: $e", red);
+      CommonMethod.getXSnackBar("Error", "Registration Failed: $e", red);
       print('Registration failed: $e');
     }
   }
 
   Future reLoginAdmin(DocumentReference? reference) async {
-    await FirebaseAuth.instance.signOut();
-    UserCredential adminCredential = await auth
-        .signInWithEmailAndPassword(
-          email: adminPhone + '@example.com',
-          password: adminPassword,
-        )
-        .whenComplete(() => null);
+    await FirebaseAuth.instance.signOut().whenComplete(() async {
+      UserCredential adminCredential = await auth
+          .signInWithEmailAndPassword(
+            email: adminPhone + '@example.com',
+            password: adminPassword,
+          )
+          .whenComplete(() => null);
 
-    if (reference != null) {
-      await reference.update({'createdBy': adminCredential.user!.uid});
-    }
-    Get.off(() => MainHomeScreen());
+      if (reference != null) {
+        await reference.update({'createdBy': adminCredential.user!.uid});
+      }
+      Get.off(() => MainHomeScreen());
+    });
   }
 
   Future<void> loginUser(BuildContext context) async {

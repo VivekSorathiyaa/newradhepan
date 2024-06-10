@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:radhe/app/utils/app_asset.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/utils/ui.dart';
-import 'package:radhe/app/utils/validator.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/app/utils/app_asset.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/utils/ui.dart';
+import 'package:shopbook/app/utils/validator.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
 
 class EmailWidget extends StatelessWidget {
   const EmailWidget({

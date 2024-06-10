@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:radhe/app/components/buttons/text_button.dart';
-import 'package:radhe/app/components/image/image_widget.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/app/components/buttons/text_button.dart';
+import 'package:shopbook/app/components/image/image_widget.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
 
 import '../../models/product_model.dart';
 

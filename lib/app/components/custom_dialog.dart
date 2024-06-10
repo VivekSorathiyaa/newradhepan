@@ -3,10 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/utils/app_asset.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/app/utils/app_asset.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
 
 import '../utils/app_text_style.dart';
 import 'buttons/text_button.dart';
@@ -44,7 +44,7 @@ class CommonDialog {
             children: [
               bodyWiget ??
                   AspectRatio(
-                    aspectRatio: 2 / 2,
+                    aspectRatio: 2 / 2, 
                     child: SvgPicture.asset(
                       AppAsset.bgAcceptBid,
                       // width: 100,

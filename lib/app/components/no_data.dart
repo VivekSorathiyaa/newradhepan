@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
 
 class NoDataFound extends StatefulWidget {
   const NoDataFound({Key? key}) : super(key: key);

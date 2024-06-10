@@ -2,16 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/image/image_widget.dart';
-import 'package:radhe/app/pages/grand_total_screen.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/app/components/image/image_widget.dart';
+import 'package:shopbook/app/pages/grand_total_screen.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
 
 import '../components/custom_dialog.dart';
 import '../controller/auth_controller.dart';
 import 'authentication/create_account_screen.dart';
+import 'authentication/notification_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -115,6 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: Text('Settings'),
                     leading: Icon(Icons.settings),
                     onTap: () {
+                      Get.to(() => NotificationSettingsScreen());
                       // Navigate to Settings screen
                     },
                   ),

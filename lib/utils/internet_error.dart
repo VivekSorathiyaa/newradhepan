@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/buttons/text_button.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
+import 'package:shopbook/app/components/buttons/text_button.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
 
 class InternetError {
   static final _instance = InternetError.internal();

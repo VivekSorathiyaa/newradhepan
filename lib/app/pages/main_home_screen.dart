@@ -4,15 +4,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/custom_dialog.dart';
-import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/pages/authentication/create_account_screen.dart';
-import 'package:radhe/app/pages/profile_screen.dart';
-import 'package:radhe/app/pages/transaction_screen.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
-import 'package:radhe/main.dart';
+import 'package:shopbook/app/components/custom_dialog.dart';
+import 'package:shopbook/app/controller/auth_controller.dart';
+import 'package:shopbook/app/pages/authentication/create_account_screen.dart';
+import 'package:shopbook/app/pages/profile_screen.dart';
+import 'package:shopbook/app/pages/transaction_screen.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/main.dart';
 
 import 'all_user_screen.dart';
 import 'notification_service.dart';
@@ -46,7 +46,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   void initState() {
     authController.getCurrentUser().whenComplete(() => setState(() {}));
     // authController.updateUserToken();
-    NotificationService().updateUserToken();
+    NotificationService().updateUserToken(authController.currentUser.value.id);
     super.initState();
   }
 

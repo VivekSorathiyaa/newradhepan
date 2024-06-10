@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ExpenseModel {
   String id;
   String userId;
-  double amount;
+  dynamic amount;
   // String description;
   DateTime date;
 

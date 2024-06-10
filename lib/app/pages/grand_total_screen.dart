@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/controller/data_controller.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/app/controller/data_controller.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
 
 class GrandTotalScreen extends StatefulWidget {
   const GrandTotalScreen({Key? key}) : super(key: key);

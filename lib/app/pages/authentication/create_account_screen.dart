@@ -6,15 +6,15 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/buttons/text_button.dart';
-import 'package:radhe/app/components/input_text_field_widget.dart';
-import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/utils/validator.dart';
-import 'package:radhe/app/widget/auth_title_widget.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
-import 'package:radhe/models/user_model.dart';
+import 'package:shopbook/app/components/buttons/text_button.dart';
+import 'package:shopbook/app/components/input_text_field_widget.dart';
+import 'package:shopbook/app/controller/auth_controller.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/utils/validator.dart';
+import 'package:shopbook/app/widget/auth_title_widget.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/models/user_model.dart';
 import '../../components/common_methos.dart';
 import '../../components/image/image_widget.dart';
 import '../../utils/ui.dart';
@@ -148,7 +148,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       Icons.business,
                       color: hintGrey,
                     ),
-                    hintText: "Business name",
+                    // hintText: "Business name",
+                    hintText: "Address",
                     keyboardType: TextInputType.name,
                   ),
                   height16,
@@ -197,7 +198,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 userImage: _imageFile,
                                 networkUrl: widget.userModel!.imageUrl);
                           } else {
-                            authController.regiterUser(
+                            authController.registerUser(
                               context: context,
                               imageFile: _imageFile!,
                             );

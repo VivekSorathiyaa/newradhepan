@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/app.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/models/user_model.dart';
-import 'package:radhe/utils/app_constants.dart';
+import 'package:shopbook/app/app.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/models/user_model.dart';
+import 'package:shopbook/utils/app_constants.dart';
 import 'package:http/http.dart' as http;
 
 import '../pages/authentication/login_screen.dart';
@@ -48,7 +48,7 @@ class CommonMethod {
   }
 
   static String formatDate(DateTime dateTime) {
-    final DateFormat formatter = DateFormat('E, d MMM, y, hh:mm a');
+    final DateFormat formatter = DateFormat('d MMM, y, hh:mm a');
     return formatter.format(dateTime);
   }
 

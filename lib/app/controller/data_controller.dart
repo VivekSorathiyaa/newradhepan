@@ -1,13 +1,16 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/pages/notification_service.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/models/user_model.dart';
-import 'package:radhe/utils/process_indicator.dart';
+import 'package:shopbook/app/components/common_methos.dart';
+import 'package:shopbook/app/controller/auth_controller.dart';
+import 'package:shopbook/app/pages/notification_service.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/models/user_model.dart';
+import 'package:shopbook/utils/process_indicator.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../models/expenses_model.dart';
 
@@ -107,9 +110,9 @@ class DataController extends GetxController {
   }
 
   Future addExpense({
-    required double amount,
-    // required String description,
-    required UserModel userModel,
+    required int amount,
+    required UserModel currentUserModel,
+    required UserModel receiverUser,
     required AuthController authController,
     required BuildContext context,
   }) async {
@@ -120,7 +123,7 @@ class DataController extends GetxController {
         .collection('expenses')
         .add(ExpenseModel(
           id: '',
-          userId: userModel.id,
+          userId: currentUserModel.id,
           amount: amount,
           // description: description,
           date: DateTime.now(),
@@ -138,41 +141,28 @@ class DataController extends GetxController {
     });
 
     processIndicator.hide(context);
+    DocumentSnapshot document = await FirebaseFirestore.instance
+        .collection('settings')
+        .doc('showNotification')
+        .get();
 
-    var receiverUser = await authController.getUserById(userModel.createdBy);
+    if (document['enabled']) {
+      String? accessToken =
+          await NotificationService().updateUserToken(currentUserModel.id);
+      log("----accessToken--->$accessToken");
+      NotificationService().sendFCMNotification(
+          accessToken: accessToken ?? currentUserModel.accessToken,
+          deviceToken: receiverUser.deviceToken,
+          title: currentUserModel.name,
+          data: 'Shopbook, ${currentUserModel.name}, ${amount.round()}');
+    }
 
-    NotificationService().sendFCMNotification(
-        accessToken: userModel.accessToken,
-        deviceToken: receiverUser!.deviceToken);
-
-    // await CommonMethod().sendFCMNotification(
-    //     title: userModel.name,
-    //     // user: userModel,
-    //     data: '${receiverUser!.businessName} ${userModel.name} ${amount}',
-    //     idToken: userModel.id,
-    //     targetToken: receiverUser.token);
-
-    // await CommonMethod.sendNotification(
-    //     title: userModel.name,
-    //     user: userModel,
-    //     body: '${receiverUser!.businessName} ${userModel.name} ${amount}');
-
-    // CommonMethod.getXSnackBar(
-    //   "Success",
-    //   "Expense added successfully",
-    //   success,
-    // );
     print('Expense added successfully');
-    // } catch (e) {
-    //   processIndicator.hide(context);
-    //   CommonMethod.getXSnackBar("Failed", "Error adding expense: $e", red);
-    // }
   }
 
   Future updateExpense({
     required String expenseId,
     required double amount,
-    // required String description,
     required String userId,
     required BuildContext context,
   }) async {
@@ -250,6 +240,61 @@ class DataController extends GetxController {
       // Handle errors
       print('Error calculating total expense: $e');
       return 0.0; // Return 0 if an error occurs
+    }
+  }
+
+  Stream<Map<String, double>> getTotalExpensesForTodayAndYesterday(
+      String userId) async* {
+    DateTime now = DateTime.now();
+    DateTime startOfToday = DateTime(now.year, now.month, now.day);
+    DateTime startOfYesterday = startOfToday.subtract(Duration(days: 1));
+    DateTime endOfYesterday = startOfToday.subtract(Duration(seconds: 1));
+
+    // Stream for today's expenses
+    Stream<QuerySnapshot> todayStream = FirebaseFirestore.instance
+        .collection('expenses')
+        .where('userId', isEqualTo: userId)
+        .snapshots();
+
+    // Stream for yesterday's expenses
+    Stream<QuerySnapshot> yesterdayStream = FirebaseFirestore.instance
+        .collection('expenses')
+        .where('userId', isEqualTo: userId)
+        .snapshots();
+
+    // Merge both streams and yield the total expenses for today and yesterday
+    await for (var snapshots
+        in CombineLatestStream.list([todayStream, yesterdayStream])) {
+      double todayTotal = 0.0;
+      double yesterdayTotal = 0.0;
+
+      QuerySnapshot todaySnapshot = snapshots[0] as QuerySnapshot;
+      QuerySnapshot yesterdaySnapshot = snapshots[1] as QuerySnapshot;
+
+      // Calculate today's total expense
+      for (var doc in todaySnapshot.docs) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        DateTime date = DateTime.parse(data['date']);
+        if (date.isAfter(startOfToday) || date.isAtSameMomentAs(startOfToday)) {
+          todayTotal += (data['amount'] ?? 0.0).toDouble();
+        }
+      }
+
+      // Calculate yesterday's total expense
+      for (var doc in yesterdaySnapshot.docs) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        DateTime date = DateTime.parse(data['date']);
+        if ((date.isAfter(startOfYesterday) ||
+                date.isAtSameMomentAs(startOfYesterday)) &&
+            (date.isBefore(startOfToday))) {
+          yesterdayTotal += (data['amount'] ?? 0.0).toDouble();
+        }
+      }
+
+      yield {
+        'todayTotal': todayTotal,
+        'yesterdayTotal': yesterdayTotal,
+      };
     }
   }
 

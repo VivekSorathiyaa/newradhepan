@@ -2,18 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'pages/authentication/login_screen.dart';
-import 'pages/main_home_screen.dart';
+import 'package:text_to_speech/text_to_speech.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// final dataStorage = GetStorage();
+import 'pages/authentication/login_screen.dart';
+import 'pages/main_home_screen.dart';
+
 User? currentUser = FirebaseAuth.instance.currentUser;
 
 final StreamController<String?> selectNotificationStream =
@@ -37,12 +38,10 @@ class ReceivedNotification {
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
-  // ignore: avoid_print
   print('notification(${notificationResponse.id}) action tapped: '
       '${notificationResponse.actionId} with'
       ' payload: ${notificationResponse.payload}');
   if (notificationResponse.input?.isNotEmpty ?? false) {
-    // ignore: avoid_print
     print(
         'notification action tapped with input: ${notificationResponse.input}');
   }
@@ -56,11 +55,11 @@ class RadheApp extends StatefulWidget {
 }
 
 class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
-  // Timer? _timer;
   late FirebaseMessaging messaging;
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  // final homeScreenController = Get.put(HomeScreenController());
+  late TextToSpeech tts; // Initialize TTS object
+
   final AndroidInitializationSettings initializationSettingsAndroid =
       const AndroidInitializationSettings('@mipmap/ic_launcher');
   final DarwinInitializationSettings initializationSettingsIOS =
@@ -70,29 +69,26 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
     requestAlertPermission: false,
   );
 
-  // final appLocationController = Get.put(UserInAppLocation());
-
   @override
   void initState() {
     messaging = FirebaseMessaging.instance;
+    tts = TextToSpeech(); // Initialize TTS object
     messaging.getToken().then((deviceToken) {
       setToken(deviceToken);
       notificationConfiguration();
     });
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
     super.initState();
     _configureSelectNotificationSubject();
   }
 
   setToken(String? deviceToken) async {
-    // GlobalSingleton().deviceToken = deviceToken.toString();
+    // Do something with the device token if needed
   }
 
-  notificationPermision() async {
+  notificationPermission() async {
     await Permission.notification.isGranted.then((value) async {
-      if (value) {
-        await Permission.notification.request();
-      } else {
+      if (!value) {
         await Permission.notification.request();
       }
     });
@@ -104,10 +100,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
-    // await flutterLocalNotificationsPlugin.initialize(
-    //   initializationSettings,
-    //   onSelectNotification: onSelectNotification,
-    // );
+
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse:
@@ -117,9 +110,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
             selectNotificationStream.add(notificationResponse.payload);
             break;
           case NotificationResponseType.selectedNotificationAction:
-            // if (notificationResponse.actionId == navigationActionId) {
             selectNotificationStream.add(notificationResponse.payload);
-            // }
             break;
         }
       },
@@ -128,28 +119,59 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
 
     FirebaseMessaging.onMessage.listen(
       (RemoteMessage message) async {
+        log("---onMessage----");
         RemoteNotification? notification = message.notification;
         if (notification != null) {
-          // await homeScreenController.getNotificationCount();
           showNotification(notification.title!, notification.body!,
               json.encode(message.data));
+
+          DocumentSnapshot document = await FirebaseFirestore.instance
+              .collection('settings')
+              .doc('showNotificationSound')
+              .get();
+
+          if (document['enabled']) {
+            speakNotification(notification.body!);
+          } // Speak notification text
         }
       },
     );
 
     FirebaseMessaging.onMessageOpenedApp.listen(
       (RemoteMessage message) {
-        // onSelectNotification(json.encode(message.data));
         selectNotificationStream.add(json.encode(message.data));
       },
     );
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  static Future<void> _firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
+    RemoteNotification? notification = message.notification;
+
+    if (notification != null) {
+      TextToSpeech tts =
+          TextToSpeech(); // Initialize TTS object in background handler
+      await tts.setLanguage('en-IN');
+      // await tts.setRate(
+      //     0.8); // Decrease the speech rate to 0.5 (half the normal speed)
+      DocumentSnapshot document = await FirebaseFirestore.instance
+          .collection('settings')
+          .doc('showNotificationSound')
+          .get();
+
+      if (document['enabled']) {
+        await tts.speak(notification.body!);
+      }
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
-    // _timer?.cancel();
     selectNotificationStream.close();
+    tts.stop(); // Stop TTS when app is disposed
     super.dispose();
   }
 
@@ -175,74 +197,15 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
 
   void _configureSelectNotificationSubject() {
     selectNotificationStream.stream.listen((String? payLoadData) async {
-      log("===payLoadData===   $payLoadData");
+      print("----payLoadData----$payLoadData");
       if (payLoadData == null) {
-        // await Get.to(const NotificationScreen());
+        // Handle null payload
       } else {
         dynamic payload = await json.decode(payLoadData);
-        if (payload['type'] == "0" || payload['type'] == 0) {
-          // await openVideo(payload['videoId'].toString());
-        } else if (payload['type'] == "1" || payload['type'] == 1) {
-          // await openVideo(payload['videoId'].toString());
-        } else {
-          // await Get.to(const NotificationScreen());
-        }
+        // Handle payload according to your requirements
       }
     });
   }
-
-  // Future onSelectNotification(String? payLoadData) async {
-  //   log("===payload===   $payLoadData");
-  //   if (payLoadData == null) {
-  //     await Get.to(const NotificationScreen());
-  //   } else {
-  //     dynamic payload = await json.decode(payLoadData);
-  //     if (payload['type'] == "0" || payload['type'] == 0) {
-  //       await openVideo(payload['videoId'].toString());
-  //     } else if (payload['type'] == "1" || payload['type'] == 1) {
-  //       await openVideo(payload['videoId'].toString());
-  //     } else if (payload['type'] == "2" || payload['type'] == 2) {
-  //       await openProfilePage(payload['followerId'].toString());
-  //     } else if (payload['type'] == "3" || payload['type'] == 3) {
-  //       await openProfilePage(payload['followerId'].toString());
-  //     } else if (payload['type'] == "4" || payload['type'] == 4) {
-  //       await Get.to(const NotificationScreen());
-  //       // await openProfilePage(payload['followerId'].toString());
-  //     } else if (payload['type'] == "5" || payload['type'] == 5) {
-  //       if (payload['videoId'] != null) {
-  //         await openVideo(payload['videoId'].toString());
-  //       } else {
-  //         await openFeed(payload['feedId'].toString());
-  //       }
-  //     } else if (payload['type'] == "6" || payload['type'] == 6) {
-  //       if (payload['videoId'] != null) {
-  //         await openVideo(payload['videoId'].toString());
-  //       } else {
-  //         await openFeed(payload['feedId'].toString());
-  //       }
-  //     } else if (payload['type'] == "7" || payload['type'] == 7) {
-  //       await Get.to(ChatScreen(
-  //         otherId: payload['senderId'].toString(),
-  //         image: AppConstants.imageEndPoint + payload['senderImage'].toString(),
-  //         roomId: payload['roomId'].toString(),
-  //         name: payload['senderName'].toString(),
-  //         function: (value) {},
-  //       ));
-  //     } else if (payload['type'] == "8" || payload['type'] == 8) {
-  //       Get.to(() => UserGigDetailScreen(
-  //             gigId: payload['gigId'].toString(),
-  //             isFromMyListing: false,
-  //             isFromGigBiddedOn: true,
-  //           ));
-  //     } else if (payload['type'] == "9" || payload['type'] == 9) {
-  //       await openFeed(payload['feedId'].toString());
-  //     } else if (payload['type'] == "10" || payload['type'] == 10) {
-  //       await openFeed(payload['videoId'].toString());
-  //     } else {
-  //       await Get.to(const NotificationScreen());
-  //     }
-  //   }
-  // }
 
   final GlobalKey<NavigatorState> _navigatorKey =
       GlobalKey<NavigatorState>(debugLabel: "navigator");
@@ -251,29 +214,22 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'radhe',
+      title: 'Shop Book',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // backgroundColor: primaryWhite,
-        // scaffoldBackgroundColor: primaryWhite,
-        // fontFamily: 'Catamaran',
-        textTheme: GoogleFonts.robotoTextTheme(),
-
-        // hintColor: regularGrey,
-        // iconTheme: const IconThemeData(
-        //   color: regularGrey,
-        //   size: 24,
-        // ),
-        // appBarTheme: const AppBarTheme(
-        //   elevation: 1,
-        //   // ignore: deprecated_member_use
-        //   // textTheme: TextTheme(headline6: TextStyle(color: Colors.white)),
-        //   backgroundColor: primaryWhite,
-        //   // foregroundColor: titleBlack,
-        //   centerTitle: true,
-        // ),
+        textTheme: GoogleFonts.interTextTheme(),
       ),
       home: currentUser != null ? MainHomeScreen() : LoginScreen(),
     );
+  }
+
+  void speakNotification(String message) async {
+    // await tts.setLanguage('en-US'); // Set language for TTS
+    await tts.setLanguage('en-IN');
+    // await tts.setRate(
+    //     0.8); // Decrease the speech rate to 0.5 (half the normal speed)
+
+    // await tts.setRate(1.0); // Set speech rate
+    await tts.speak(message); // Speak the message
   }
 }

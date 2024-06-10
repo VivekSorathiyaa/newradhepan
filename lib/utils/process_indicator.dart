@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:radhe/app/utils/colors.dart';
+import 'package:shopbook/app/utils/colors.dart';
 
 import 'internet_error.dart';
 

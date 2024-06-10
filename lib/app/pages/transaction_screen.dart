@@ -2,10 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/simmer/simmer_gig_tile_widget.dart';
-import 'package:radhe/app/components/simmer/transaction_simmer.dart';
-import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/controller/data_controller.dart';
+import 'package:shopbook/app/components/simmer/transaction_simmer.dart';
+import 'package:shopbook/app/controller/auth_controller.dart';
+import 'package:shopbook/app/controller/data_controller.dart';
 import '../../models/expenses_model.dart';
 import '../../models/user_model.dart';
 import '../components/common_methos.dart';
@@ -146,6 +145,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                                     return Row(
                                                       children: [
                                                         Expanded(
+                                                          flex: 6,
                                                           child: Text(
                                                             '${userModel.name}',
                                                             style: AppTextStyle
@@ -158,23 +158,20 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                                                 TextAlign.start,
                                                           ),
                                                         ),
-                                                        Expanded(
-                                                          child: Text(
-                                                            '${CommonMethod.formatTime(expense.date)}',
-                                                            style: AppTextStyle
-                                                                .normalRegular14
-                                                                .copyWith(
-                                                                    color:
-                                                                        grey),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                          ),
+                                                        Text(
+                                                          '${CommonMethod.formatTime(expense.date)}',
+                                                          style: AppTextStyle
+                                                              .normalRegular12
+                                                              .copyWith(
+                                                                  color: grey),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                         Expanded(
+                                                          flex: 3,
                                                           child: Text(
                                                             '+ ${expense.amount.round()}',
                                                             style: AppTextStyle
@@ -212,14 +209,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                         Expanded(
                                           child: Text(
                                             'Total',
-                                            style: AppTextStyle.normalBold12
-                                                .copyWith(color: primaryBlack),
+                                            style: AppTextStyle.normalBold14
+                                                .copyWith(color: appColor),
                                           ),
                                         ),
                                         Text(
                                           '₹ ${totalAmount.round()}',
-                                          style: AppTextStyle.normalBold12
-                                              .copyWith(color: primaryBlack),
+                                          style: AppTextStyle.normalBold14
+                                              .copyWith(color: appColor),
                                         ),
                                       ],
                                     ),

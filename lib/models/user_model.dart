@@ -10,6 +10,7 @@ class UserModel {
   String businessName;
   String deviceToken;
   String accessToken;
+  bool showTotal;
 
   UserModel({
     required this.id,
@@ -20,7 +21,8 @@ class UserModel {
     required this.password,
     required this.businessName,
     required this.deviceToken,
-    required this.accessToken, 
+    required this.accessToken,
+    required this.showTotal,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class UserModel {
       businessName: json['businessName'] ?? '',
       deviceToken: json['deviceToken'] ?? '',
       accessToken: json['accessToken'] ?? '',
+      showTotal: json['showTotal'] ?? false,
     );
   }
 
@@ -48,6 +51,7 @@ class UserModel {
       'businessName': businessName,
       'deviceToken': deviceToken,
       'accessToken': accessToken,
+      'showTotal': showTotal,
     };
   }
 }

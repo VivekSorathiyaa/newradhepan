@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/app.dart';
-import 'package:radhe/app/components/buttons/text_button.dart';
-import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/components/input_text_field_widget.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/utils/validator.dart';
-import 'package:radhe/app/widget/auth_title_widget.dart';
-import 'package:radhe/app/controller/auth_controller.dart'; // Import your AuthController
-import 'package:radhe/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/app/app.dart';
+import 'package:shopbook/app/components/buttons/text_button.dart';
+import 'package:shopbook/app/components/common_methos.dart';
+import 'package:shopbook/app/components/input_text_field_widget.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/utils/validator.dart';
+import 'package:shopbook/app/widget/auth_title_widget.dart';
+import 'package:shopbook/app/controller/auth_controller.dart'; // Import your AuthController
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
 import '../../../main.dart';
 import '../../components/custom_dialog.dart';
 import '../../utils/ui.dart';

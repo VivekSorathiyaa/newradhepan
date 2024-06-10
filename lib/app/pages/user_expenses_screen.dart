@@ -1,17 +1,21 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/buttons/text_button.dart';
-import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/components/custom_dialog.dart';
-import 'package:radhe/app/components/input_text_field_widget.dart';
-import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/controller/data_controller.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/utils/validator.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
-import 'package:radhe/models/user_model.dart';
+import 'package:shopbook/app/components/buttons/text_button.dart';
+import 'package:shopbook/app/components/common_methos.dart';
+import 'package:shopbook/app/components/custom_dialog.dart';
+import 'package:shopbook/app/components/input_text_field_widget.dart';
+import 'package:shopbook/app/controller/auth_controller.dart';
+import 'package:shopbook/app/controller/data_controller.dart';
+import 'package:shopbook/app/pages/user_details_screen.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/utils/validator.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/models/user_model.dart';
 
 import '../../models/expenses_model.dart';
 
@@ -40,7 +44,8 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
           businessName: '',
           deviceToken: '',
           imageUrl: '',
-          accessToken: '')
+          accessToken: '',
+          showTotal: false)
       .obs;
 
   @override
@@ -49,16 +54,28 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
     super.initState();
   }
 
-  refreshPage() async {
-    if (!widget.isAdmin) {
-      final UserModel? user =
-          await authController.getUserById(widget.user.createdBy);
-      adminUserModel.value = user ?? adminUserModel.value;
-    } else {
-      final UserModel? currentUser = await authController.getCurrentUser();
-      adminUserModel.value = currentUser ??
-          adminUserModel
-              .value; // Provide a default UserModel or adjust as necessary
+  Future<void> refreshPage() async {
+    try {
+      if (!widget.isAdmin) {
+        final UserModel? adminUser =
+            await authController.getUserById(widget.user.createdBy);
+        if (adminUser != null) {
+          adminUserModel.value = adminUser;
+        } else {
+          // Handle the case when the admin user is not found
+          print('Admin user not found');
+        }
+      } else {
+        final UserModel? currentUser = await authController.getCurrentUser();
+        if (currentUser != null) {
+          adminUserModel.value = currentUser;
+        } else {
+          // Handle the case when the current user is not found
+          print('Current user not found');
+        }
+      }
+    } catch (e) {
+      print('Error refreshing page: $e');
     }
   }
 
@@ -70,68 +87,135 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
         iconTheme: IconThemeData(
             color: primaryWhite), // Set the drawer icon color here
         backgroundColor: appColor,
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.user.name,
-              style: AppTextStyle.homeAppbarTextStyle,
-            ),
-            Obx(
-              () => Text(
-                adminUserModel.value.businessName,
-                style:
-                    AppTextStyle.normalRegular14.copyWith(color: primaryWhite),
+        // titleSpacing: 0,
+        title: GestureDetector(
+          onTap: () {
+            if (widget.isAdmin) {
+              Get.to(() => UserDetailScreen(
+                    user: widget.user,
+                  ));
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.user.name,
+                style: AppTextStyle.homeAppbarTextStyle,
               ),
-            ),
-          ],
-        ),
-        actions: [
-          StreamBuilder<double>(
-            stream: controller.getTotalExpenseStream(
-                widget.user.id), // Assuming you have userId available
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SizedBox(); // Show loading indicator while fetching data
-              } else if (snapshot.hasError) {
-                return SizedBox();
-              } else {
-                double totalExpense = snapshot.data ??
-                    0.0; // Get total expense from snapshot data
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    // crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total', // Display the total expense
+              Obx(
+                () => adminUserModel.value.businessName != ''
+                    ? Text(
+                        adminUserModel.value.businessName,
                         style: AppTextStyle.normalRegular14
                             .copyWith(color: primaryWhite),
-                      ),
-                      Text(
-                        '${totalExpense.round()}', // Display the total expense
-                        style: AppTextStyle.normalBold16
-                            .copyWith(color: primaryWhite),
-                      ),
-                    ],
-                  ),
+                      )
+                    : SizedBox(),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          StreamBuilder<DocumentSnapshot>(
+            stream: widget.user.id.isNotEmpty
+                ? FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(widget.user.id)
+                    .snapshots()
+                : Stream.empty(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || !snapshot.data!.exists) {
+                if (widget.user.id.isNotEmpty) {
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.user.id)
+                      .set({
+                    'showTotal': false,
+                  });
+                }
+                return SizedBox();
+              }
+
+              var data = snapshot.data!.data();
+              if (data == null ||
+                  !(data is Map<String, dynamic>) ||
+                  !data.containsKey('showTotal')) {
+                if (widget.user.id.isNotEmpty) {
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.user.id)
+                      .update({'showTotal': false});
+                }
+                return SizedBox();
+              }
+
+              bool showTotal = data['showTotal'];
+
+              if (!showTotal && !widget.isAdmin) {
+                return SizedBox();
+              } else {
+                return StreamBuilder<Map<String, double>>(
+                  stream: controller
+                      .getTotalExpensesForTodayAndYesterday(widget.user.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return SizedBox(
+                          height: 100,
+                          child: Center(child: CircularProgressIndicator()));
+                    } else if (snapshot.hasError) {
+                      return SizedBox(
+                          height: 100,
+                          child: Center(
+                              child:
+                                  Text('Error: ${snapshot.error.toString()}')));
+                    } else {
+                      double totalTodayExpense =
+                          snapshot.data?['todayTotal'] ?? 0.0;
+                      double totalYesterdayExpense =
+                          snapshot.data?['yesterdayTotal'] ?? 0.0;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${totalTodayExpense.round()}',
+                              style: AppTextStyle.normalBold16
+                                  .copyWith(color: primaryWhite),
+                            ),
+                            Text(
+                              '${totalYesterdayExpense.round()}',
+                              style: AppTextStyle.normalRegular14.copyWith(
+                                  color: primaryWhite.withOpacity(.5)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
                 );
               }
             },
           ),
+
           // if (!widget.isAdmin)
-          IconButton(
-              onPressed: () {
-                CommonDialog.showConfirmationDialog(
-                    onOkPress: () {
-                      Get.back();
-                      authController.signOut();
-                    },
-                    context: context);
-              },
-              icon: Icon(Icons.logout))
+          //   IconButton(
+          //       onPressed: () {
+          //         CommonDialog.showConfirmationDialog(
+          //             onOkPress: () {
+          //               Get.back();
+          //               authController.signOut();
+          //             },
+          //             context: context);
+          //       },
+          //       icon: Icon(Icons.logout))
         ],
       ),
       body: Column(
@@ -155,7 +239,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                     }
                     final expenses = snapshot.data ?? [];
                     if (expenses.isEmpty) {
-                      return Center(child: Text('No expenses found'));
+                      return SizedBox();
                     }
                     return ListView.builder(
                       shrinkWrap: true,
@@ -164,73 +248,84 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                       itemBuilder: (context, index) {
                         final expense = expenses[index];
                         return InkWell(
-                          onTap: () {
-                            CommonDialog.showSimpleDialog(
-                                title: "Options",
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    children: [
-                                      PrimaryTextButton(
-                                          title: "Edit",
-                                          onPressed: () async {
-                                            amountController.text =
-                                                expense.amount.toString();
-                                            setState(() {});
+                          onLongPress: () {
+                            if (widget.isAdmin) {
+                              CommonDialog.showSimpleDialog(
+                                  title: "Options",
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      children: [
+                                        PrimaryTextButton(
+                                            title: "Edit",
+                                            onPressed: () async {
+                                              amountController.text = expense
+                                                  .amount
+                                                  .round()
+                                                  .toString();
+                                              setState(() {});
 
-                                            Get.back();
-                                            CommonDialog.showSimpleDialog(
-                                                title: "Edit Expense",
-                                                child: Column(
-                                                  children: [
-                                                    TextFormFieldWidget(
-                                                      controller:
-                                                          amountController,
-                                                      hintText: "Amount",
-                                                    ),
-                                                    height20,
-                                                    PrimaryTextButton(
-                                                        title: "Done",
-                                                        onPressed: () async {
-                                                          Get.back();
-                                                          await controller.updateExpense(
-                                                              amount: double.parse(
-                                                                  amountController
-                                                                      .text),
-                                                              userId: expense
-                                                                  .userId,
-                                                              context: context,
-                                                              expenseId:
-                                                                  expense.id);
+                                              Get.back();
+                                              CommonDialog.showSimpleDialog(
+                                                  title: "Edit Expense",
+                                                  child: Column(
+                                                    children: [
+                                                      TextFormFieldWidget(
+                                                        controller:
+                                                            amountController,
+                                                        hintText: "Amount",
+                                                        keyboardType:
+                                                            TextInputType
+                                                                .number,
+                                                      ),
+                                                      height20,
+                                                      PrimaryTextButton(
+                                                          title: "Done",
+                                                          onPressed: () async {
+                                                            Get.back();
+                                                            await controller.updateExpense(
+                                                                amount: double.parse(
+                                                                    amountController
+                                                                        .text),
+                                                                userId: expense
+                                                                    .userId,
+                                                                context:
+                                                                    context,
+                                                                expenseId:
+                                                                    expense.id);
 
-                                                          setState(() {});
-                                                        })
-                                                  ],
-                                                ),
-                                                context: context);
-                                          }),
-                                      PrimaryTextButton(
-                                          buttonColor: red,
-                                          title: "Delete",
-                                          onPressed: () async {
-                                            await CommonDialog
-                                                .showConfirmationDialog(
-                                                    title:
-                                                        "Are you sure you want to delete this expense data ?",
-                                                    onOkPress: () {
-                                                      Get.back();
-                                                      Get.back();
-                                                      controller.deleteExpense(
-                                                          expenseId: expense.id,
-                                                          context: context);
-                                                      setState(() {});
-                                                    },
-                                                    context: context);
-                                          }),
-                                    ],
+                                                            setState(() {});
+                                                          })
+                                                    ],
+                                                  ),
+                                                  context: context);
+                                            }),
+                                        PrimaryTextButton(
+                                            buttonColor: red,
+                                            title: "Delete",
+                                            onPressed: () async {
+                                              await CommonDialog
+                                                  .showConfirmationDialog(
+                                                      title:
+                                                          "Are you sure you want to delete this expense data ?",
+                                                      onOkPress: () {
+                                                        Get.back();
+                                                        Get.back();
+                                                        controller
+                                                            .deleteExpense(
+                                                                expenseId:
+                                                                    expense.id,
+                                                                context:
+                                                                    context);
+                                                        setState(() {});
+                                                      },
+                                                      context: context);
+                                            }),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                context: context);
+                                  context: context);
+                            }
                           },
                           child: Padding(
                             padding: const EdgeInsets.only(
@@ -242,19 +337,15 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  flex: 4,
                                   child: Text(
-                                    '₹ ${expense.amount.round()}',
+                                    '${expense.amount.round()}',
                                     style: AppTextStyle.normalBold14,
                                   ),
                                 ),
-                                Expanded(
-                                  flex: 6,
-                                  child: Text(
-                                    '${CommonMethod.formatDate(expense.date)}',
-                                    style: AppTextStyle.normalRegular14
-                                        .copyWith(color: hintGrey),
-                                  ),
+                                Text(
+                                  '${CommonMethod.formatDate(expense.date)}',
+                                  style: AppTextStyle.normalRegular14.copyWith(
+                                      color: primaryBlack.withOpacity(.5)),
                                 ),
                               ],
                             )),
@@ -276,8 +367,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                   child: TextFormFieldWidget(
                     controller: amountController,
                     hintText: "Enter Value",
-                    keyboardType:
-                        TextInputType.numberWithOptions(decimal: false),
+                    keyboardType: TextInputType.number,
                     validator: (value) {
                       Validators.validateDigits(value!, "Amount");
                     },
@@ -289,9 +379,10 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                     controller
                         .addExpense(
                             authController: authController,
-                            amount: double.parse(amountController.text),
+                            amount: int.parse(amountController.text),
                             context: context,
-                            userModel: widget.user)
+                            currentUserModel: widget.user,
+                            receiverUser: adminUserModel.value)
                         .whenComplete(() {
                       amountController.clear();
                       // descriptionController.clear();

@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/pages/authentication/login_screen.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/utils/app_constants.dart';
-import 'package:radhe/utils/network_dio/network_dio.dart';
-import 'package:radhe/utils/process_indicator.dart';
+import 'package:shopbook/app/components/common_methos.dart';
+import 'package:shopbook/app/pages/authentication/login_screen.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/utils/app_constants.dart';
+import 'package:shopbook/utils/network_dio/network_dio.dart';
+import 'package:shopbook/utils/process_indicator.dart';
 
 import '../../app/app.dart';
 

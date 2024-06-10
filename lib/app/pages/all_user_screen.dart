@@ -2,16 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/common_methos.dart';
-import 'package:radhe/app/controller/auth_controller.dart';
-import 'package:radhe/app/controller/data_controller.dart';
-import 'package:radhe/app/pages/authentication/create_account_screen.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/app/widget/shodow_container_widget.dart';
-import 'package:radhe/models/expenses_model.dart';
-import 'package:radhe/models/user_model.dart';
+import 'package:shopbook/app/components/common_methos.dart';
+import 'package:shopbook/app/controller/auth_controller.dart';
+import 'package:shopbook/app/controller/data_controller.dart';
+import 'package:shopbook/app/pages/authentication/create_account_screen.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/app/widget/shodow_container_widget.dart';
+import 'package:shopbook/models/expenses_model.dart';
+import 'package:shopbook/models/user_model.dart';
 import 'user_expenses_screen.dart';
 import '../components/image/image_widget.dart';
 import '../components/buttons/text_button.dart';
@@ -134,34 +134,48 @@ class _AllUserScreenState extends State<AllUserScreen> {
                                           style: AppTextStyle.normalBold16,
                                         ),
                                       ),
-                                  StreamBuilder<List<ExpenseModel>>(
-  stream: dataController.getUserLastExpenses(user.id),
-  builder: (context, expenseSnapshot) {
-    if (expenseSnapshot.connectionState == ConnectionState.waiting) {
-      return CircularProgressIndicator(); // Show loading indicator
-    } else if (expenseSnapshot.hasError) {
-      return Text('Error: ${expenseSnapshot.error}'); // Show error message
-    } else if (!expenseSnapshot.hasData || expenseSnapshot.data!.isEmpty) {
-      return Text('No expenses found'); // Show message for no data
-    }
+                                      StreamBuilder<List<ExpenseModel>>(
+                                        stream: dataController
+                                            .getUserLastExpenses(user.id),
+                                        builder: (context, expenseSnapshot) {
+                                          if (expenseSnapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return CircularProgressIndicator(); // Show loading indicator
+                                          } else if (expenseSnapshot.hasError) {
+                                            return Text(
+                                                'Error: ${expenseSnapshot.error}'); // Show error message
+                                          } else if (!expenseSnapshot.hasData ||
+                                              expenseSnapshot.data!.isEmpty) {
+                                            return SizedBox(); // Show message for no data
+                                          }
 
-    // Data is available, build UI
-    List<ExpenseModel> expenses = expenseSnapshot.data!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: expenses.map((expense) {
-        var index = expenses.indexOf(expense);
-        return Text(
-          '+ ${expense.amount}',
-          style: index == 0
-              ? AppTextStyle.normalBold14.copyWith(color: appColor)
-              : AppTextStyle.normalRegular14.copyWith(color: appColor.withOpacity(.8)),
-        );
-      }).toList(),
-    );
-  },
-)
-  ],
+                                          // Data is available, build UI
+                                          List<ExpenseModel> expenses =
+                                              expenseSnapshot.data!;
+                                          return Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: expenses.map((expense) {
+                                              var index =
+                                                  expenses.indexOf(expense);
+                                              return Text(
+                                                '+ ${expense.amount}',
+                                                style: index == 0
+                                                    ? AppTextStyle.normalBold14
+                                                        .copyWith(
+                                                            color: appColor)
+                                                    : AppTextStyle
+                                                        .normalRegular14
+                                                        .copyWith(
+                                                            color: appColor
+                                                                .withOpacity(
+                                                                    .8)),
+                                              );
+                                            }).toList(),
+                                          );
+                                        },
+                                      )
+                                    ],
                                   ),
                                 ],
                               ),

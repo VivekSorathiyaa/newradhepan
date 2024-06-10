@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:radhe/app/components/image/image_widget.dart';
-import 'package:radhe/app/utils/app_asset.dart';
-import 'package:radhe/app/utils/app_text_style.dart';
-import 'package:radhe/app/utils/colors.dart';
-import 'package:radhe/app/utils/static_decoration.dart';
-import 'package:radhe/utils/app_constants.dart';
+import 'package:shopbook/app/components/image/image_widget.dart';
+import 'package:shopbook/app/utils/app_asset.dart';
+import 'package:shopbook/app/utils/app_text_style.dart';
+import 'package:shopbook/app/utils/colors.dart';
+import 'package:shopbook/app/utils/static_decoration.dart';
+import 'package:shopbook/utils/app_constants.dart';
 
 class UiInterface {
   static Widget mainLogo() {
