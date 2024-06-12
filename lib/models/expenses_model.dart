@@ -4,14 +4,12 @@ class ExpenseModel {
   String id;
   String userId;
   dynamic amount;
-  // String description;
   DateTime date;
 
   ExpenseModel({
     required this.id,
     required this.userId,
     required this.amount,
-    // required this.description,
     required this.date,
   });
 
@@ -26,12 +24,14 @@ class ExpenseModel {
     );
   }
 
+
+  
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'userId': userId,
       'amount': amount,
-      // 'description': description,
       'date': date.toIso8601String(),
     };
   }

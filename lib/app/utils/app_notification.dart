@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -7,7 +8,8 @@ class AppNotification {
   static const notificationChannelId = "radhe";
   late AndroidInitializationSettings initializationSettingsAndroid;
   late AndroidNotificationChannel androidNotificationChannel;
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   Future<void> initNotification() async {
     await Firebase.initializeApp();
@@ -20,13 +22,16 @@ class AppNotification {
       sound: true,
     );
 
-    initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
+    initializationSettingsAndroid =
+        const AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings(
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
-      onDidReceiveLocalNotification: (int id, String? title, String? body, String? payload) async {
+      onDidReceiveLocalNotification:
+          (int id, String? title, String? body, String? payload) async {
         // Handle local notification tapped logic here
       },
     );
@@ -49,35 +54,40 @@ class AppNotification {
       showBadge: true,
     );
 
-    await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidNotificationChannel);
 
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
+    // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    //   log("-----onMessageonMessage-----");
+    //   RemoteNotification? notification = message.notification;
+    //   AndroidNotification? android = message.notification?.android;
 
-      if (notification != null && android != null) {
-        flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              androidNotificationChannel.id,
-              androidNotificationChannel.name,
-              channelDescription: androidNotificationChannel.description,
-              icon: android.smallIcon,
-            ),
-          ),
-        );
-      }
-    });
+    //   if (notification != null && android != null) {
+    //     flutterLocalNotificationsPlugin.show(
+    //       notification.hashCode,
+    //       notification.title,
+    //       notification.body,
+    //       NotificationDetails(
+    //         android: AndroidNotificationDetails(
+    //           androidNotificationChannel.id,
+    //           androidNotificationChannel.name,
+    //           channelDescription: androidNotificationChannel.description,
+    //           icon: android.smallIcon,
+    //         ),
+    //       ),
+    //     );
+    //   }
+    // });
+ 
+ 
   }
 }
-

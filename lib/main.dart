@@ -23,7 +23,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await GetStorage.init();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyDL1upXcDetrTiZUjMWE7sZCb4t_yVu0Zo",
+      authDomain: "radhepan-5e6db.firebaseapp.com",
+      projectId: "radhepan-5e6db",
+      storageBucket: "radhepan-5e6db.appspot.com",
+      messagingSenderId: "591678791810",
+      appId: "1:591678791810:android:9fc17e37711e7e4a06d49b",
+    ),
+  );
   AppNotification().initNotification();
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
@@ -42,6 +51,8 @@ Future<void> main() async {
 
 Future firebaseBackgroundmsg(RemoteMessage message) async {
   log("Handling a background message: ${message.messageId}");
+  await Firebase.initializeApp();
+
   TextToSpeech tts = TextToSpeech();
   await tts.setLanguage('en-IN');
   // await tts.setRate(0.8);
@@ -53,7 +64,7 @@ Future firebaseBackgroundmsg(RemoteMessage message) async {
         .get();
 
     if (document['enabled']) {
-      await tts.speak(message.notification!.body ?? '');
+      await tts.speak(message.data['message']);
     }
     log(message.notification!.title ?? '');
   }

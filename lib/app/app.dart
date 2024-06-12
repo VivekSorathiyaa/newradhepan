@@ -118,8 +118,11 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
     );
 
     FirebaseMessaging.onMessage.listen(
+
       (RemoteMessage message) async {
         log("---onMessage----");
+        log('Message data: ${message.data}');
+
         RemoteNotification? notification = message.notification;
         if (notification != null) {
           showNotification(notification.title!, notification.body!,
@@ -131,7 +134,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
               .get();
 
           if (document['enabled']) {
-            speakNotification(notification.body!);
+            speakNotification(message.data['message']);
           } // Speak notification text
         }
       },
@@ -162,7 +165,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
           .get();
 
       if (document['enabled']) {
-        await tts.speak(notification.body!);
+        await tts.speak(message.data['message']);
       }
     }
   }
@@ -176,6 +179,7 @@ class _RadheAppState extends State<RadheApp> with WidgetsBindingObserver {
   }
 
   showNotification(String title, String message, dynamic payload) async {
+    
     var android = const AndroidNotificationDetails(
       'channel id',
       'channel NAME',

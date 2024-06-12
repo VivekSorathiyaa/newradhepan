@@ -51,15 +51,51 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Obx(
-          () => Text(
-            authController.currentUser.value.businessName ?? "Shop Book",
-            style: AppTextStyle.homeAppbarTextStyle,
+          title: Obx(
+            () => Text(
+              authController.currentUser.value.businessName ?? "Shop Book",
+              style: AppTextStyle.homeAppbarTextStyle,
+            ),
           ),
-        ),
-        automaticallyImplyLeading: false,
-        backgroundColor: appColor,
-      ),
+          automaticallyImplyLeading: false,
+          backgroundColor: appColor,
+          actions: [
+            StreamBuilder<Map<String, double>>(
+              stream: dataController.getTotalExpensesForTodayAndYesterday(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SizedBox();
+                } else if (snapshot.hasError) {
+                  return SizedBox();
+                } else {
+                  double totalTodayExpense =
+                      snapshot.data?['todayTotal'] ?? 0.0;
+                  double totalYesterdayExpense =
+                      snapshot.data?['yesterdayTotal'] ?? 0.0;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${totalTodayExpense.round()}',
+                          style: AppTextStyle.normalBold16
+                              .copyWith(color: primaryWhite),
+                        ),
+                        Text(
+                          '${totalYesterdayExpense.round()}',
+                          style: AppTextStyle.normalRegular14
+                              .copyWith(color: primaryWhite.withOpacity(.5)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+            )
+          ]),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Column(

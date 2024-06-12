@@ -1,30 +1,27 @@
-import 'dart:developer';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shopbook/app/components/buttons/text_button.dart';
 import 'package:shopbook/app/components/common_methos.dart';
-import 'package:shopbook/app/components/custom_dialog.dart';
 import 'package:shopbook/app/components/input_text_field_widget.dart';
 import 'package:shopbook/app/controller/auth_controller.dart';
 import 'package:shopbook/app/controller/data_controller.dart';
 import 'package:shopbook/app/pages/user_details_screen.dart';
 import 'package:shopbook/app/utils/app_text_style.dart';
 import 'package:shopbook/app/utils/colors.dart';
-import 'package:shopbook/app/utils/static_decoration.dart';
 import 'package:shopbook/app/utils/validator.dart';
 import 'package:shopbook/app/widget/shodow_container_widget.dart';
-import 'package:shopbook/models/user_model.dart';
-
 import '../../models/expenses_model.dart';
+import '../../models/user_model.dart';
+import '../components/custom_dialog.dart';
 
 class UserExpensesScreen extends StatefulWidget {
   final UserModel user;
-  final bool isAdmin;
+  final bool isFromAdmin;
 
   const UserExpensesScreen(
-      {Key? key, required this.user, required this.isAdmin})
+      {Key? key, required this.user, required this.isFromAdmin})
       : super(key: key);
 
   @override
@@ -56,13 +53,12 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
 
   Future<void> refreshPage() async {
     try {
-      if (!widget.isAdmin) {
+      if (!widget.isFromAdmin) {
         final UserModel? adminUser =
             await authController.getUserById(widget.user.createdBy);
         if (adminUser != null) {
           adminUserModel.value = adminUser;
         } else {
-          // Handle the case when the admin user is not found
           print('Admin user not found');
         }
       } else {
@@ -70,7 +66,6 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
         if (currentUser != null) {
           adminUserModel.value = currentUser;
         } else {
-          // Handle the case when the current user is not found
           print('Current user not found');
         }
       }
@@ -84,13 +79,11 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
     refreshPage();
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(
-            color: primaryWhite), // Set the drawer icon color here
+        iconTheme: IconThemeData(color: primaryWhite),
         backgroundColor: appColor,
-        // titleSpacing: 0,
         title: GestureDetector(
           onTap: () {
-            if (widget.isAdmin) {
+            if (widget.isFromAdmin) {
               Get.to(() => UserDetailScreen(
                     user: widget.user,
                   ));
@@ -104,15 +97,13 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                 widget.user.name,
                 style: AppTextStyle.homeAppbarTextStyle,
               ),
-              Obx(
-                () => adminUserModel.value.businessName != ''
-                    ? Text(
-                        adminUserModel.value.businessName,
-                        style: AppTextStyle.normalRegular14
-                            .copyWith(color: primaryWhite),
-                      )
-                    : SizedBox(),
-              ),
+              Obx(() => adminUserModel.value.businessName != ''
+                  ? Text(
+                      adminUserModel.value.businessName,
+                      style: AppTextStyle.normalRegular14
+                          .copyWith(color: primaryWhite),
+                    )
+                  : SizedBox()),
             ],
           ),
         ),
@@ -156,44 +147,32 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
 
               bool showTotal = data['showTotal'];
 
-              if (!showTotal && !widget.isAdmin) {
+              if (!showTotal && !widget.isFromAdmin) {
                 return SizedBox();
               } else {
-                return StreamBuilder<Map<String, double>>(
-                  stream: controller
-                      .getTotalExpensesForTodayAndYesterday(widget.user.id),
+                return StreamBuilder<double>(
+                  stream: controller.getTotalExpenseStream(widget.user.id),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return SizedBox(
-                          height: 100,
-                          child: Center(child: CircularProgressIndicator()));
+                      return SizedBox();
                     } else if (snapshot.hasError) {
-                      return SizedBox(
-                          height: 100,
-                          child: Center(
-                              child:
-                                  Text('Error: ${snapshot.error.toString()}')));
+                      return SizedBox();
                     } else {
-                      double totalTodayExpense =
-                          snapshot.data?['todayTotal'] ?? 0.0;
-                      double totalYesterdayExpense =
-                          snapshot.data?['yesterdayTotal'] ?? 0.0;
-
+                      double totalExpense = snapshot.data ?? 0.0;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${totalTodayExpense.round()}',
-                              style: AppTextStyle.normalBold16
+                              'Total',
+                              style: AppTextStyle.normalRegular12
                                   .copyWith(color: primaryWhite),
                             ),
                             Text(
-                              '${totalYesterdayExpense.round()}',
-                              style: AppTextStyle.normalRegular14.copyWith(
-                                  color: primaryWhite.withOpacity(.5)),
+                              '${totalExpense.round()}',
+                              style: AppTextStyle.normalBold14
+                                  .copyWith(color: primaryWhite),
                             ),
                           ],
                         ),
@@ -204,18 +183,46 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
               }
             },
           ),
+          if (widget.isFromAdmin)
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.user.id)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return SizedBox();
+                }
 
-          // if (!widget.isAdmin)
-          //   IconButton(
-          //       onPressed: () {
-          //         CommonDialog.showConfirmationDialog(
-          //             onOkPress: () {
-          //               Get.back();
-          //               authController.signOut();
-          //             },
-          //             context: context);
-          //       },
-          //       icon: Icon(Icons.logout))
+                var userDoc = snapshot.data!;
+                if (!userDoc.exists) {
+                  controller.initializeUserDoc(widget.user.id);
+                  return SizedBox();
+                }
+
+                Map<String, dynamic> data =
+                    userDoc.data() as Map<String, dynamic>;
+                bool showTotal = data['showTotal'] ?? false;
+                controller.showTotal.value = showTotal;
+
+                return Obx(() => Transform.scale(
+                      scale:
+                          0.7, // Adjust the scale value to make the switch smaller
+                      child: Switch(
+                        activeColor: primaryWhite,
+                        value: controller.showTotal.value,
+                        onChanged: (bool value) async {
+                          await controller.updateShowTotal(
+                              widget.user.id, value);
+
+                          if (value) {
+                            controller.startCountdown(widget.user.id);
+                          }
+                        },
+                      ),
+                    ));
+              },
+            ),
         ],
       ),
       body: Column(
@@ -249,7 +256,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                         final expense = expenses[index];
                         return InkWell(
                           onLongPress: () {
-                            if (widget.isAdmin) {
+                            if (widget.isFromAdmin) {
                               CommonDialog.showSimpleDialog(
                                   title: "Options",
                                   child: Padding(
@@ -263,8 +270,6 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                                                   .amount
                                                   .round()
                                                   .toString();
-                                              setState(() {});
-
                                               Get.back();
                                               CommonDialog.showSimpleDialog(
                                                   title: "Edit Expense",
@@ -278,7 +283,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                                                             TextInputType
                                                                 .number,
                                                       ),
-                                                      height20,
+                                                      SizedBox(height: 20),
                                                       PrimaryTextButton(
                                                           title: "Done",
                                                           onPressed: () async {
@@ -293,8 +298,6 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                                                                     context,
                                                                 expenseId:
                                                                     expense.id);
-
-                                                            setState(() {});
                                                           })
                                                     ],
                                                   ),
@@ -307,7 +310,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                                               await CommonDialog
                                                   .showConfirmationDialog(
                                                       title:
-                                                          "Are you sure you want to delete this expense data ?",
+                                                          "Are you sure you want to delete this expense data?",
                                                       onOkPress: () {
                                                         Get.back();
                                                         Get.back();
@@ -317,7 +320,6 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                                                                     expense.id,
                                                                 context:
                                                                     context);
-                                                        setState(() {});
                                                       },
                                                       context: context);
                                             }),
@@ -331,8 +333,6 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                             padding: const EdgeInsets.only(
                                 top: 10, left: 10, right: 10),
                             child: ShadowContainerWidget(
-                                // padding: 0,
-
                                 widget: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -355,7 +355,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                     );
                   },
                 ),
-                customHeight(100)
+                SizedBox(height: 100),
               ],
             ),
           ),
@@ -373,7 +373,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                     },
                   ),
                 ),
-                width15,
+                SizedBox(width: 15),
                 InkWell(
                   onTap: () {
                     controller
@@ -381,12 +381,15 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                             authController: authController,
                             amount: int.parse(amountController.text),
                             context: context,
-                            currentUserModel: widget.user,
-                            receiverUser: adminUserModel.value)
+                            senderUser: widget.isFromAdmin
+                                ? adminUserModel.value
+                                : widget.user,
+                            receiverUser: widget.isFromAdmin
+                                ? widget.user
+                                : adminUserModel.value,
+                            customerUser: widget.user)
                         .whenComplete(() {
                       amountController.clear();
-                      // descriptionController.clear();
-                      setState(() {});
                     });
                   },
                   child: CircleAvatar(
@@ -396,7 +399,7 @@ class _UserExpensesScreenState extends State<UserExpensesScreen> {
                       color: primaryWhite,
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),

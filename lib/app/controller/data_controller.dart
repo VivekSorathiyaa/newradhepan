@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -16,7 +17,10 @@ import '../../models/expenses_model.dart';
 
 class DataController extends GetxController {
   RxList<UserModel> userList = <UserModel>[].obs;
+  final FirebaseAuth auth = FirebaseAuth.instance;
+
   static Circle processIndicator = Circle();
+  var showTotal = false.obs;
 
   @override
   void onInit() {
@@ -31,7 +35,13 @@ class DataController extends GetxController {
         .collection('users')
         .snapshots()
         .map((query) {
-      return query.docs.map((doc) => UserModel.fromJson(doc.data())).toList();
+      // return query.docs.map((doc) => UserModel.fromJson(doc.data())).toList();
+
+      return query.docs
+          .map((doc) => UserModel.fromJson(doc.data()))
+          .where((user) => user.id != auth.currentUser!.uid)
+          .toList();
+      // });
     });
   }
   // Future fetchUsers() async {
@@ -45,6 +55,20 @@ class DataController extends GetxController {
   //     print('Error fetching users: $e');
   //   }
   // }
+
+  Stream<ExpenseModel?> getUserLastExpense(String userId) {
+    return FirebaseFirestore.instance
+        .collection('expenses')
+        .where('userId', isEqualTo: userId)
+        .orderBy('date', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      return ExpenseModel.fromJson(
+          snapshot.docs.first.data() as Map<String, dynamic>);
+    });
+  }
 
   Stream<List<ExpenseModel>> getUserExpenses(String userId) {
     return FirebaseFirestore.instance
@@ -111,8 +135,9 @@ class DataController extends GetxController {
 
   Future addExpense({
     required int amount,
-    required UserModel currentUserModel,
+    required UserModel senderUser,
     required UserModel receiverUser,
+    required UserModel customerUser,
     required AuthController authController,
     required BuildContext context,
   }) async {
@@ -123,9 +148,8 @@ class DataController extends GetxController {
         .collection('expenses')
         .add(ExpenseModel(
           id: '',
-          userId: currentUserModel.id,
+          userId: customerUser.id,
           amount: amount,
-          // description: description,
           date: DateTime.now(),
         ).toJson());
 
@@ -148,13 +172,14 @@ class DataController extends GetxController {
 
     if (document['enabled']) {
       String? accessToken =
-          await NotificationService().updateUserToken(currentUserModel.id);
+          await NotificationService().updateUserToken(senderUser.id);
       log("----accessToken--->$accessToken");
       NotificationService().sendFCMNotification(
-          accessToken: accessToken ?? currentUserModel.accessToken,
+          accessToken: accessToken ?? senderUser.accessToken,
           deviceToken: receiverUser.deviceToken,
-          title: currentUserModel.name,
-          data: 'Shopbook, ${currentUserModel.name}, ${amount.round()}');
+          title: senderUser.name,
+          data: {"message": 'Shopbook, ${senderUser.name}, ${amount.round()}'},
+          subTitle: amount.round().toString());
     }
 
     print('Expense added successfully');
@@ -243,24 +268,19 @@ class DataController extends GetxController {
     }
   }
 
-  Stream<Map<String, double>> getTotalExpensesForTodayAndYesterday(
-      String userId) async* {
+  Stream<Map<String, double>> getTotalExpensesForTodayAndYesterday() async* {
     DateTime now = DateTime.now();
     DateTime startOfToday = DateTime(now.year, now.month, now.day);
     DateTime startOfYesterday = startOfToday.subtract(Duration(days: 1));
     DateTime endOfYesterday = startOfToday.subtract(Duration(seconds: 1));
 
     // Stream for today's expenses
-    Stream<QuerySnapshot> todayStream = FirebaseFirestore.instance
-        .collection('expenses')
-        .where('userId', isEqualTo: userId)
-        .snapshots();
+    Stream<QuerySnapshot> todayStream =
+        FirebaseFirestore.instance.collection('expenses').snapshots();
 
     // Stream for yesterday's expenses
-    Stream<QuerySnapshot> yesterdayStream = FirebaseFirestore.instance
-        .collection('expenses')
-        .where('userId', isEqualTo: userId)
-        .snapshots();
+    Stream<QuerySnapshot> yesterdayStream =
+        FirebaseFirestore.instance.collection('expenses').snapshots();
 
     // Merge both streams and yield the total expenses for today and yesterday
     await for (var snapshots
@@ -383,5 +403,24 @@ class DataController extends GetxController {
       print('Error fetching user document: $e');
       return null;
     }
+  }
+
+  Future<void> updateShowTotal(String userId, bool value) async {
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      'showTotal': value,
+    });
+    showTotal.value = value;
+  }
+
+  void startCountdown(String userId) {
+    Future.delayed(Duration(seconds: 10), () async {
+      updateShowTotal(userId, false);
+    });
+  }
+
+  void initializeUserDoc(String userId) async {
+    await FirebaseFirestore.instance.collection('users').doc(userId).set({
+      'showTotal': false,
+    });
   }
 }

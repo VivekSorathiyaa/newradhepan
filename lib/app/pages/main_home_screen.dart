@@ -113,7 +113,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ? _widgetOptions.elementAt(_selectedIndex)
             : UserExpensesScreen(
                 user: authController.currentUser.value,
-                isAdmin: false,
+                isFromAdmin: false,
               ),
       ),
     );

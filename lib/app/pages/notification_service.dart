@@ -15,6 +15,7 @@ class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<String?> updateUserToken(String userId) async {
+    log("---inSide-updateUserToken--userId---$userId");
     try {
       // Request permission to receive notifications and get device token concurrently
       final NotificationSettings settings =
@@ -117,7 +118,8 @@ class NotificationService {
       {required String accessToken,
       required String deviceToken,
       required String title,
-      required String data}) async {
+      required String subTitle,
+      required Map<String, dynamic> data}) async {
     final url = Uri.parse(
         'https://fcm.googleapis.com/v1/projects/radhepan-5e6db/messages:send');
 
@@ -133,8 +135,9 @@ class NotificationService {
         'token': deviceToken,
         'notification': {
           'title': title,
-          'body': data,
+          'body': subTitle,
         },
+        'data': data,
       },
     });
 

@@ -16,7 +16,6 @@ class UserDetailScreen extends StatefulWidget {
 }
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
-  Timer? _timer;
 
   @override
   Widget build(BuildContext context) {
@@ -105,56 +104,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         leading: Icon(Icons.security),
                         title: Text(widget.user.password),
                       ),
-                      StreamBuilder<DocumentSnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(widget.user.id)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return Center(child: CircularProgressIndicator());
-                          }
-
-                          var userDoc = snapshot.data!;
-                          if (!userDoc.exists) {
-                            _initializeUserDoc(widget.user.id);
-                            return Center(child: CircularProgressIndicator());
-                          }
-
-                          Map<String, dynamic> data =
-                              userDoc.data() as Map<String, dynamic>;
-                          bool showTotal = data['showTotal'] ?? false;
-
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                ListTile(
-                                  // leading: Icon(Icons.timelapse_sharp),
-                                  title: SwitchListTile(
-                                    activeColor: appColor,
-                                    title: Text('Show Total'),
-                                    value: showTotal,
-                                    onChanged: (bool value) async {
-                                      await FirebaseFirestore.instance
-                                          .collection('users')
-                                          .doc(widget.user.id)
-                                          .update({
-                                        'showTotal': value,
-                                      });
-
-                                      if (value) {
-                                        _startCountdown();
-                                      }
-                                    },
-                                  ),
-                                ),
-                                SizedBox(height: 20),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                   
                     ],
                   ),
                 ),
@@ -166,33 +116,5 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
-  void _startCountdown() {
-    _timer?.cancel();
-    _timer = Timer(Duration(seconds: 10), () {
-      setState(() {
-        _updateTotalPreference(false);
-      });
-    });
-  }
 
-  void _updateTotalPreference(bool value) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.user.id)
-        .update({
-      'showTotal': value,
-    });
-  }
-
-  Future<void> _initializeUserDoc(String userId) async {
-    await FirebaseFirestore.instance.collection('users').doc(userId).set({
-      'showTotal': false,
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
 }
